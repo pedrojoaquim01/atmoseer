@@ -13,7 +13,7 @@ import seaborn as sns
 import sklearn.metrics as skl 
 import sklearn.preprocessing as preproc
 from torch.utils.data import TensorDataset
-
+import argparse
 from pre_processamento import pre_proc
 
 
@@ -78,7 +78,7 @@ class EarlyStopping:
         '''Saves model when validation loss decrease.'''
         if self.verbose:
             print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
-        torch.save(model.state_dict(), 'checkpoint.pt')
+        torch.save(model.state_dict(), 'Modelo.pt')
         self.val_loss_min = val_loss
 
 class Net(nn.Module):
@@ -121,6 +121,8 @@ def fit(epochs, lr, model, train_loader, val_loader,patience, opt_func=torch.opt
     
     optimizer = opt_func(model.parameters(), lr)
 
+    n_epochs = epochs
+    criterion = nn.MSELoss()
     # initialize the early_stopping object
     early_stopping = EarlyStopping(patience=patience, verbose=True)
 
@@ -186,198 +188,220 @@ def fit(epochs, lr, model, train_loader, val_loader,patience, opt_func=torch.opt
     return  model, avg_train_losses, avg_valid_losses
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------
-
-cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
-arquivo = 'RIO DE JANEIRO - FORTE DE COPACABANA_1997_2022'
-log_CAPE = 1
-
-# Pré processamento
-df = pre_proc('RIO DE JANEIRO - FORTE DE COPACABANA_1997_2022',1,1,1)
-print(df.describe())
-
-if log_CAPE:
-    df['CAPE'][0] = 0
-    df['CIN'][0] = 0
-    df = df.interpolate(method='linear')
-
-# Normalização dos Dados
-if arquivo in cor_est:
-    df1 = df.drop(columns=['Dia','Hora','estacao'])
-else:
-    df1 = df.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO'])
-
-d_max = df1.max()
-d_min = df1.min()
-df_norm=(df1-df1.min())/(df1.max()-df1.min())
-
-# Separação dos Dados
-n = len(df_norm)
-train_df = df_norm[0:int(n*0.7)]
-val_df = df_norm[int(n*0.7):int(n*0.9)]
-test_df = df_norm[int(n*0.9):]
-
-num_features = df_norm.shape[1]
-
-# Janelamento
-train_arr = np.array(train_df)
-val_arr = np.array(val_df)
-test_arr = np.array(test_df)
-
-# Execução do janelamento
-TIME_WINDOW_SIZE = 6    # Espaço de Janelamento
-IDX_TARGET = 0          # Variavel a ser predita ( CHUVA )
-
-train_x, train_y = apply_windowing(train_arr, 
-                                  initial_time_step=0, 
-                                  max_time_step=len(train_arr)-TIME_WINDOW_SIZE-1, 
-                                  window_size = TIME_WINDOW_SIZE, 
-                                  idx_target = IDX_TARGET)
-train_y = train_y.reshape(-1,1)
-
-val_x, val_y = apply_windowing(val_arr, 
-                                  initial_time_step=0, 
-                                  max_time_step=len(val_arr)-TIME_WINDOW_SIZE-1, 
-                                  window_size = TIME_WINDOW_SIZE, 
-                                  idx_target = IDX_TARGET)
-val_y = val_y.reshape(-1,1)
-
-test_x, test_y = apply_windowing(test_arr, 
-                                  initial_time_step=0, 
-                                  max_time_step=len(test_arr)-TIME_WINDOW_SIZE-1, 
-                                  window_size = TIME_WINDOW_SIZE, 
-                                  idx_target = IDX_TARGET)
-test_y = test_y.reshape(-1,1)
-
-train_x = torch.from_numpy(train_x.astype('float64'))
-train_x = torch.permute(train_x, (0, 2, 1))
-train_y = torch.from_numpy(train_y.astype('float64'))
-
-val_x = torch.from_numpy(val_x.astype('float64'))
-val_x = torch.permute(val_x, (0, 2, 1))
-val_y = torch.from_numpy(val_y.astype('float64'))
-
-test_x = torch.from_numpy(test_x.astype('float64'))
-test_x = torch.permute(test_x, (0, 2, 1))
-test_y = torch.from_numpy(test_y.astype('float64'))  
-
-train_ds = TensorDataset(train_x, train_y)
-val_ds = TensorDataset(val_x, val_y)
-test_ds = TensorDataset(test_x, test_y)
-
-BATCH_SIZE = 32
-train_loader = torch.utils.data.DataLoader(train_ds, batch_size = BATCH_SIZE, shuffle = False)
-val_loader = torch.utils.data.DataLoader(val_ds, batch_size = BATCH_SIZE, shuffle = False)
-test_loader = torch.utils.data.DataLoader(test_ds, batch_size = BATCH_SIZE, shuffle = False)
-
-# Gera modelo
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-model = Net(in_channels=28).to(device)
-
-criterion = nn.MSELoss()
-
-# Erro relativo antes do treinamento
-test_losses = []
-for xb, yb in test_loader:
-  output = model(xb.float())
-  # calculate the loss
-  loss = criterion(output, yb.float())
-  # record validation loss
-  test_losses.append(loss.item())
-test_loss = np.average(test_losses)
-print('Perda média pré treinamento: ')  
-print(test_loss)
-
-# Treinamento
-n_epochs = 500
-patience = 10
-
-model = model.float()
-model, train_loss, val_loss = fit(n_epochs, 1e-5, model, train_loader, val_loader,patience, opt_func=torch.optim.Adam)
-
-# Erro relativo pós treinamento
-test_losses = []
-for xb, yb in test_loader:
-  output = model(xb.float())
-  # calculate the loss
-  loss = criterion(output, yb.float())
-  # record validation loss
-  test_losses.append(loss.item())
-test_loss = np.average(test_losses)
-print('Perda média pós treinamento: ')  
-print(test_loss)
-
-# Gráfico
-fig = plt.figure(figsize=(10,8))
-plt.plot(range(1,len(train_loss)+1),train_loss, label='Training Loss')
-plt.plot(range(1,len(val_loss)+1),val_loss,label='Validation Loss')
-plt.xlabel('epochs')
-plt.ylabel('loss')
-plt.xlim(0, len(train_loss)+1)
-plt.grid(True)
-plt.legend()
-plt.tight_layout()
-plt.show()
-fig.savefig(arquivo + '_loss_plot.png', bbox_inches='tight')
-
-# Resultados do modelo
-test_losses = []
-outputs = []
-with torch.no_grad():
-  for xb, yb in test_loader:
-    output = model(xb.float())
-    outputs.append(output)
-test_predictions = torch.vstack(outputs).squeeze(1)
-test_predictions.numpy()
-test_predictions = torch.cat((test_predictions, torch.tensor([0,0,0,0,0,0])), 0)
-
-# Resetando os Conjuntos de dados
-train_df = df[0:int(n*0.7)]
-val_df = df[int(n*0.7):int(n*0.9)]
-test_df = df[int(n*0.9):]
-
-if arquivo in cor_est:
-    # Erro médio do modelo
-    test_predictions = (test_predictions * (d_max['Chuva'] - d_min['Chuva']) + d_min['Chuva'])
-    skl.mean_absolute_error(test_df['Chuva'], test_predictions)
-
-    # Visualização do desempenho do modelo
-    fig, ax = plt.subplots(1, 1, figsize=(15, 5))
-    ax.plot(train_df['Dia'], train_df['Chuva'], lw=2, label='train data')
-    ax.plot(val_df['Dia'], val_df['Chuva'], lw=2, label='val data')
-    ax.plot(test_df['Dia'], test_df['Chuva'], lw=3, c='y', label='test data')
-    ax.plot(test_df['Dia'], test_predictions, lw=3, c='r',linestyle = ':', label='predictions')
-    ax.legend(loc="upper left")
-    plt.show()
-    fig.savefig(arquivo + '_Desempenho_Geral.png', bbox_inches='tight')
-
-    fig, ax = plt.subplots(1, 1, figsize=(15, 5))
-    ax.plot(test_df['Dia'], test_df['Chuva'], lw=3, c='y', label='test data')
-    ax.plot(test_df['Dia'], test_predictions, lw=3, c='r',linestyle = ':', label='predictions')
-    ax.legend(loc="upper left")
-    plt.show()
-    fig.savefig(arquivo + '_Desempenho_Teste.png', bbox_inches='tight')
-else:
-    # Erro médio do modelo
-    test_predictions = (test_predictions * (d_max['CHUVA'] - d_min['CHUVA']) + d_min['CHUVA'])
-    skl.mean_absolute_error(test_df['CHUVA'], test_predictions)
+def modelo(arquivo,log_CAPE = 1,log_Vento = 1,log_Tempo = 1):
+    cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
     
-    fig, ax = plt.subplots(1, 1, figsize=(15, 5))
-    ax.plot(train_df['DT_MEDICAO'], train_df['CHUVA'], lw=2, label='train data')
-    ax.plot(val_df['DT_MEDICAO'], val_df['CHUVA'], lw=2, label='val data')
-    ax.plot(test_df['DT_MEDICAO'], test_df['CHUVA'], lw=3, c='y', label='test data')
-    ax.plot(test_df['DT_MEDICAO'], test_predictions, lw=3, c='r',linestyle = ':', label='predictions')
-    ax.legend(loc="upper left")
-    plt.show()
-    fig.savefig(arquivo + '_Desempenho_Geral.png', bbox_inches='tight')
+
+    # Pré processamento
+    df = pre_proc(arquivo,log_CAPE,log_Vento,log_Tempo)
+    print(df.describe())
+
+    if log_CAPE:
+        df['CAPE'][0] = 0
+        df['CIN'][0] = 0
+        df = df.interpolate(method='linear')
+
+    # Normalização dos Dados
+    if arquivo in cor_est:
+        df1 = df.drop(columns=['Dia','Hora','estacao'])
+    else:
+        df1 = df.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO'])
+
+    d_max = df1.max()
+    d_min = df1.min()
+    df_norm=(df1-df1.min())/(df1.max()-df1.min())
+
+    # Separação dos Dados
+    n = len(df_norm)
+    train_df = df_norm[0:int(n*0.7)]
+    val_df = df_norm[int(n*0.7):int(n*0.9)]
+    test_df = df_norm[int(n*0.9):]
+
+    num_features = df_norm.shape[1]
+
+    # Janelamento
+    train_arr = np.array(train_df)
+    val_arr = np.array(val_df)
+    test_arr = np.array(test_df)
+
+    # Execução do janelamento
+    TIME_WINDOW_SIZE = 6    # Espaço de Janelamento
+    IDX_TARGET = 0          # Variavel a ser predita ( CHUVA )
+
+    train_x, train_y = apply_windowing(train_arr, 
+                                    initial_time_step=0, 
+                                    max_time_step=len(train_arr)-TIME_WINDOW_SIZE-1, 
+                                    window_size = TIME_WINDOW_SIZE, 
+                                    idx_target = IDX_TARGET)
+    train_y = train_y.reshape(-1,1)
+
+    val_x, val_y = apply_windowing(val_arr, 
+                                    initial_time_step=0, 
+                                    max_time_step=len(val_arr)-TIME_WINDOW_SIZE-1, 
+                                    window_size = TIME_WINDOW_SIZE, 
+                                    idx_target = IDX_TARGET)
+    val_y = val_y.reshape(-1,1)
+
+    test_x, test_y = apply_windowing(test_arr, 
+                                    initial_time_step=0, 
+                                    max_time_step=len(test_arr)-TIME_WINDOW_SIZE-1, 
+                                    window_size = TIME_WINDOW_SIZE, 
+                                    idx_target = IDX_TARGET)
+    test_y = test_y.reshape(-1,1)
+
+    train_x = torch.from_numpy(train_x.astype('float64'))
+    train_x = torch.permute(train_x, (0, 2, 1))
+    train_y = torch.from_numpy(train_y.astype('float64'))
+
+    val_x = torch.from_numpy(val_x.astype('float64'))
+    val_x = torch.permute(val_x, (0, 2, 1))
+    val_y = torch.from_numpy(val_y.astype('float64'))
+
+    test_x = torch.from_numpy(test_x.astype('float64'))
+    test_x = torch.permute(test_x, (0, 2, 1))
+    test_y = torch.from_numpy(test_y.astype('float64'))  
+
+    train_ds = TensorDataset(train_x, train_y)
+    val_ds = TensorDataset(val_x, val_y)
+    test_ds = TensorDataset(test_x, test_y)
+
+    BATCH_SIZE = 32
+    train_loader = torch.utils.data.DataLoader(train_ds, batch_size = BATCH_SIZE, shuffle = False)
+    val_loader = torch.utils.data.DataLoader(val_ds, batch_size = BATCH_SIZE, shuffle = False)
+    test_loader = torch.utils.data.DataLoader(test_ds, batch_size = BATCH_SIZE, shuffle = False)
+
+    # Gera modelo
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model = Net(in_channels=28).to(device)
+
+    criterion = nn.MSELoss()
+
+    # Erro relativo antes do treinamento
+    test_losses = []
+    for xb, yb in test_loader:
+        output = model(xb.float())
+        # calculate the loss
+        loss = criterion(output, yb.float())
+        # record validation loss
+        test_losses.append(loss.item())
+        test_loss = np.average(test_losses)
+    print('Perda média pré treinamento: ')  
+    print(test_loss)
+
+    # Treinamento
+    n_epochs = 500
+    patience = 10
+
+    model = model.float()
+    model, train_loss, val_loss = fit(n_epochs, 1e-5, model, train_loader, val_loader,patience, opt_func=torch.optim.Adam)
+
+    # Erro relativo pós treinamento
+    test_losses = []
+    for xb, yb in test_loader:
+        output = model(xb.float())
+        # calculate the loss
+        loss = criterion(output, yb.float())
+        # record validation loss
+        test_losses.append(loss.item())
+        test_loss = np.average(test_losses)
+    print('Perda média pós treinamento: ')  
+    print(test_loss)
+
+    # Gráfico
+    fig = plt.figure(figsize=(10,8))
+    plt.plot(range(1,len(train_loss)+1),train_loss, label='Training Loss')
+    plt.plot(range(1,len(val_loss)+1),val_loss,label='Validation Loss')
+    plt.xlabel('epochs')
+    plt.ylabel('loss')
+    plt.xlim(0, len(train_loss)+1)
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    fig.savefig(arquivo + '_loss_plot.png', bbox_inches='tight')
+
+    # Resultados do modelo
+    test_losses = []
+    outputs = []
+    with torch.no_grad():
+        for xb, yb in test_loader:
+            output = model(xb.float())
+            outputs.append(output)
     
-    fig, ax = plt.subplots(1, 1, figsize=(15, 5))
-    ax.plot(test_df['DT_MEDICAO'], test_df['CHUVA'], lw=3, c='y', label='test data')
-    ax.plot(test_df['DT_MEDICAO'], test_predictions, lw=3, c='r',linestyle = ':', label='predictions')
-    ax.legend(loc="upper left")
-    plt.show()
-    fig.savefig(arquivo + '_Desempenho_Teste.png', bbox_inches='tight')
+    test_predictions = torch.vstack(outputs).squeeze(1)
+    test_predictions.numpy()
+    test_predictions = torch.cat((test_predictions, torch.tensor([0,0,0,0,0,0])), 0)
+
+    # Resetando os Conjuntos de dados
+    train_df = df[0:int(n*0.7)]
+    val_df = df[int(n*0.7):int(n*0.9)]
+    test_df = df[int(n*0.9):]
+
+    if arquivo in cor_est:
+        # Erro médio do modelo
+        test_predictions = (test_predictions * (d_max['Chuva'] - d_min['Chuva']) + d_min['Chuva'])
+        erro_absoluto = skl.mean_absolute_error(test_df['Chuva'], test_predictions)
+        print('Erro Absoluto do modelo:')
+        print(erro_absoluto)
+
+        # Visualização do desempenho do modelo
+        fig, ax = plt.subplots(1, 1, figsize=(15, 5))
+        ax.plot(train_df['Dia'], train_df['Chuva'], lw=2, label='train data')
+        ax.plot(val_df['Dia'], val_df['Chuva'], lw=2, label='val data')
+        ax.plot(test_df['Dia'], test_df['Chuva'], lw=3, c='y', label='test data')
+        ax.plot(test_df['Dia'], test_predictions, lw=3, c='r',linestyle = ':', label='predictions')
+        ax.legend(loc="upper left")
+        fig.savefig(arquivo + '_Desempenho_Geral.png', bbox_inches='tight')
+
+        fig, ax = plt.subplots(1, 1, figsize=(15, 5))
+        ax.plot(test_df['Dia'], test_df['Chuva'], lw=3, c='y', label='test data')
+        ax.plot(test_df['Dia'], test_predictions, lw=3, c='r',linestyle = ':', label='predictions')
+        ax.legend(loc="upper left")
+        fig.savefig(arquivo + '_Desempenho_Teste.png', bbox_inches='tight')
+    else:
+        # Erro médio do modelo
+        test_predictions = (test_predictions * (d_max['CHUVA'] - d_min['CHUVA']) + d_min['CHUVA'])
+        erro_absoluto = skl.mean_absolute_error(test_df['CHUVA'], test_predictions)
+        print('Erro Absoluto do modelo:')
+        print(erro_absoluto)
+
+        fig, ax = plt.subplots(1, 1, figsize=(15, 5))
+        ax.plot(train_df['DT_MEDICAO'], train_df['CHUVA'], lw=2, label='train data')
+        ax.plot(val_df['DT_MEDICAO'], val_df['CHUVA'], lw=2, label='val data')
+        ax.plot(test_df['DT_MEDICAO'], test_df['CHUVA'], lw=3, c='y', label='test data')
+        ax.plot(test_df['DT_MEDICAO'], test_predictions, lw=3, c='r',linestyle = ':', label='predictions')
+        ax.legend(loc="upper left")
+        fig.savefig(arquivo + '_Desempenho_Geral.png', bbox_inches='tight')
+        
+        fig, ax = plt.subplots(1, 1, figsize=(15, 5))
+        ax.plot(test_df['DT_MEDICAO'], test_df['CHUVA'], lw=3, c='y', label='test data')
+        ax.plot(test_df['DT_MEDICAO'], test_predictions, lw=3, c='r',linestyle = ':', label='predictions')
+        ax.legend(loc="upper left")
+        fig.savefig(arquivo + '_Desempenho_Teste.png', bbox_inches='tight')
 
 
+def main():
+    #open('cs.txt', 'w').close()
+    arguments = get_parser().parse_args()
+    var1 = arguments.arquivo
+    var2 = var3 = var4 = 1
+    if arguments.log_CAPE is not None:
+        var2 = arguments.log_CAPE
+    if arguments.log_Vento is not None:    
+        var3 = arguments.log_Vento
+    if arguments.log_Tempo is not None:
+        var4 = arguments.log_Tempo
+    modelo(var1,var2,var3,var4)
 
+def get_parser():
+    parser = argparse.ArgumentParser(description='Clients')
+    parser.add_argument('arquivo', type=str)
+    parser.add_argument('log_CAPE', type=bool)
+    parser.add_argument('log_Vento', type=bool)
+    parser.add_argument('log_Tempo', type=bool)
+
+    return parser
+
+if __name__ == "__main__":
+    main()
 
 
