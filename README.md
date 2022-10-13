@@ -18,7 +18,8 @@ Os argumentos são:
  - `-w` ou `--wind` Log que determina se será incluso as variáveis compostas do vento, no conjunto de dados que será usado para o treinamento.
  - `-i` ou `--min` e `-a` ou `--max`  Delimita os meses que serão apresentados no conjunto de dados, escolhendo o mês de início no _min_ e o mês de fim no _max_. Vale ressaltar que a delimitação só funciona caso os dois períodos estejam preenchidos.
 
-*Exemplo de Execução:*
+Exemplo de Execução:
+  
   `Python cria_modelo.py -f 'RIO DE JANEIRO - FORTE DE COPACABANA_1997_2022' -c 0 -t 1 -w 1 -i 10 -a 5`
 
 Será criado um modelo de predição de chuva baseado na estação do Forte de Copacabana, com dados apenas de Outubro até Março e serão inclusos as variáveis de Tempo e Vento.
