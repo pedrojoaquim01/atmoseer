@@ -13,7 +13,6 @@ import seaborn as sns
 import sklearn.metrics as skl 
 import sklearn.preprocessing as preproc
 from torch.utils.data import TensorDataset
-import argparse
 from pre_processamento import pre_proc
 import sys
 import getopt
@@ -226,7 +225,7 @@ def modelo(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max
     # Execução do janelamento
     TIME_WINDOW_SIZE = 6    # Espaço de Janelamento
     IDX_TARGET = 0          # Variavel a ser predita ( CHUVA )
-
+    
     train_x, train_y = apply_windowing(train_arr, 
                                     initial_time_step=0, 
                                     max_time_step=len(train_arr)-TIME_WINDOW_SIZE-1, 
@@ -270,8 +269,10 @@ def modelo(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max
     test_loader = torch.utils.data.DataLoader(test_ds, batch_size = BATCH_SIZE, shuffle = False)
 
     # Gera modelo
+    colunm = train_df.shape[1]
+
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = Net(in_channels=28).to(device)
+    model = Net(in_channels=colunm).to(device)
 
     criterion = nn.MSELoss()
 

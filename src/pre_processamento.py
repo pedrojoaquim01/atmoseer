@@ -22,6 +22,8 @@ def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_ma
         fonte = '../Dados/'+arq_pre_proc+'.csv'
         df = pd.read_csv(fonte)
         del df['Unnamed: 0']
+        df = df.fillna(0)
+        df = df.reindex(sorted(df.columns), axis=1)
         return df
     else:
         fonte = '../Dados/'+arquivo+'.csv'
