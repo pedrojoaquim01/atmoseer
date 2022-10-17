@@ -80,7 +80,7 @@ class EarlyStopping:
             print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
         torch.save(model.state_dict(), 'Modelo.pt')
         self.val_loss_min = val_loss
-
+'''
 class Net(nn.Module):
     def __init__(self, in_channels):
         super(Net,self).__init__()
@@ -91,19 +91,37 @@ class Net(nn.Module):
         self.fc2 = nn.Linear(50,1)
 
     def forward(self,x):
-        #print('Input: ', x.shape)
         x = self.conv1d(x)
-        #print('After conv1: ', x.shape)
         x = self.relu(x)
-        #print('After ReLU: ', x.shape)
+
         x = x.view(x.shape[0], -1)
-        #print('After flatenning: ', x.shape)
+
         x = self.fc1(x)
-        #print(x.shape)
         x = self.relu(x)
         x = self.fc2(x)
-        #print('return')
-        #print(x.shape)
+        return x
+'''
+class Net(nn.Module):
+    def __init__(self, in_channels):
+        super(Net,self).__init__()
+
+        self.conv1 = nn.Conv1d(in_channels = in_channels, out_channels = 64, kernel_size = 5, stride=1, padding=2)
+        self.pool1 = nn.MaxPool1d(1)
+        self.conv2 = nn.Conv1d(in_channels = 64, out_channels = 128, kernel_size = 3, stride = 1, padding=1)
+        self.relu = nn.ReLU()  #function to initiate model parameters
+        
+        self.fc1 = nn.Linear(768,64)
+        self.fc2 = nn.Linear(64,1)
+
+    def forward(self,x):
+        x = self.relu(self.conv1(x))
+        x = self.pool1(x)
+        x = self.relu(self.conv2(x))
+        x = x.view(x.shape[0], -1)
+
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
         return x
 
 def fit(epochs, lr, model, train_loader, val_loader,patience, opt_func=torch.optim.SGD):
@@ -189,6 +207,16 @@ def fit(epochs, lr, model, train_loader, val_loader,patience, opt_func=torch.opt
 def modelo(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max = 0):
     cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
     
+    nom_aux = arquivo
+    if(log_CAPE):
+        nom_aux = nom_aux + '_CAPE'
+    if(log_Vento):
+        nom_aux = nom_aux + '_VENT'
+    if(log_Tempo):
+        nom_aux = nom_aux + '_TEMP'
+    if  mes_min != 0 and mes_max != 0:
+        nom_aux = nom_aux + '_' + str(mes_min) + '_' + str(mes_max)
+
 
     # Pré processamento
     df = pre_proc(arquivo,log_CAPE,log_Vento,log_Tempo,mes_min,mes_max)
@@ -201,10 +229,11 @@ def modelo(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max
 
     # Normalização dos Dados
     if arquivo in cor_est:
-        df1 = df.drop(columns=['Dia','Hora','estacao'])
+        df1 = df.drop(columns=['Dia','Hora','estacao','HBV'])
     else:
         df1 = df.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO'])
 
+    print(df1.info())
     d_max = df1.max()
     d_min = df1.min()
     df_norm=(df1-df1.min())/(df1.max()-df1.min())
@@ -267,12 +296,14 @@ def modelo(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max
     train_loader = torch.utils.data.DataLoader(train_ds, batch_size = BATCH_SIZE, shuffle = False)
     val_loader = torch.utils.data.DataLoader(val_ds, batch_size = BATCH_SIZE, shuffle = False)
     test_loader = torch.utils.data.DataLoader(test_ds, batch_size = BATCH_SIZE, shuffle = False)
+    
+    column = train_df.shape[1]
 
     # Gera modelo
     colunm = train_df.shape[1]
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = Net(in_channels=colunm).to(device)
+    model = Net(in_channels=column).to(device)
 
     criterion = nn.MSELoss()
 
@@ -290,7 +321,7 @@ def modelo(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max
 
     # Treinamento
     n_epochs = 500
-    patience = 10
+    patience = 20
 
     model = model.float()
     model, train_loss, val_loss = fit(n_epochs, 1e-5, model, train_loader, val_loader,patience, opt_func=torch.optim.Adam)
@@ -317,7 +348,7 @@ def modelo(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
-    fig.savefig(arquivo + '_loss_plot.png', bbox_inches='tight')
+    fig.savefig('../img/' + nom_aux + '_loss_plot.png', bbox_inches='tight')
 
     # Resultados do modelo
     test_losses = []
@@ -339,8 +370,11 @@ def modelo(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max
     if arquivo in cor_est:
         # Erro médio do modelo
         test_predictions = (test_predictions * (d_max['Chuva'] - d_min['Chuva']) + d_min['Chuva'])
-        erro_absoluto = skl.mean_absolute_error(test_df['Chuva'], test_predictions)
+        erro_absoluto = skl.mean_squared_error(test_df['Chuva'], test_predictions)
         print('Erro Absoluto do modelo:')
+        hs = open("../log/log_experimentos.txt","a")
+        hs.write('\n' + nom_aux + ': ' + str(erro_absoluto))
+        hs.close() 
         print(erro_absoluto)
 
         # Visualização do desempenho do modelo
@@ -350,18 +384,28 @@ def modelo(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max
         ax.plot(test_df['Dia'], test_df['Chuva'], lw=3, c='y', label='test data')
         ax.plot(test_df['Dia'], test_predictions, lw=3, c='r',linestyle = ':', label='predictions')
         ax.legend(loc="upper left")
-        fig.savefig(arquivo + '_Desempenho_Geral.png', bbox_inches='tight')
+        fig.savefig('../img/' + nom_aux + '_Desempenho_Geral.png', bbox_inches='tight')
 
         fig, ax = plt.subplots(1, 1, figsize=(15, 5))
         ax.plot(test_df['Dia'], test_df['Chuva'], lw=3, c='y', label='test data')
         ax.plot(test_df['Dia'], test_predictions, lw=3, c='r',linestyle = ':', label='predictions')
         ax.legend(loc="upper left")
-        fig.savefig(arquivo + '_Desempenho_Teste.png', bbox_inches='tight')
+        fig.savefig('../img/' + nom_aux + '_Desempenho_Teste.png', bbox_inches='tight')
+
+        log_chuva_modelo =  list(map(lambda x: 0 if x <= 0 else 1,test_predictions.tolist()))
+        test_df['log_chuva'] = test_df['Chuva'].map(lambda x: 0 if x <= 0 else 1)
+        cm = skl.confusion_matrix(test_df['log_chuva'], log_chuva_modelo)
+        sns_plot = sns.heatmap(cm/np.sum(cm), annot=True, fmt='.2%', cmap='Purples')
+        fig2 = sns_plot.get_figure()
+        fig2.savefig('../img/' + nom_aux + '_matrix_conf.png')
     else:
         # Erro médio do modelo
         test_predictions = (test_predictions * (d_max['CHUVA'] - d_min['CHUVA']) + d_min['CHUVA'])
-        erro_absoluto = skl.mean_absolute_error(test_df['CHUVA'], test_predictions)
+        erro_absoluto = skl.mean_squared_error(test_df['CHUVA'], test_predictions)
         print('Erro Absoluto do modelo:')
+        hs = open("../log/log_experimentos.txt","a")
+        hs.write('\n' + nom_aux + ': ' + str(erro_absoluto))
+        hs.close() 
         print(erro_absoluto)
 
         fig, ax = plt.subplots(1, 1, figsize=(15, 5))
@@ -370,13 +414,20 @@ def modelo(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max
         ax.plot(test_df['DT_MEDICAO'], test_df['CHUVA'], lw=3, c='y', label='test data')
         ax.plot(test_df['DT_MEDICAO'], test_predictions, lw=3, c='r',linestyle = ':', label='predictions')
         ax.legend(loc="upper left")
-        fig.savefig(arquivo + '_Desempenho_Geral.png', bbox_inches='tight')
+        fig.savefig('../img/' + nom_aux + '_Desempenho_Geral.png', bbox_inches='tight')
         
         fig, ax = plt.subplots(1, 1, figsize=(15, 5))
         ax.plot(test_df['DT_MEDICAO'], test_df['CHUVA'], lw=3, c='y', label='test data')
         ax.plot(test_df['DT_MEDICAO'], test_predictions, lw=3, c='r',linestyle = ':', label='predictions')
         ax.legend(loc="upper left")
-        fig.savefig(arquivo + '_Desempenho_Teste.png', bbox_inches='tight')
+        fig.savefig('../img/' + nom_aux + '_Desempenho_Teste.png', bbox_inches='tight')
+        
+        log_chuva_modelo =  list(map(lambda x: 0 if x <= 0 else 1,test_predictions.tolist()))
+        test_df['log_chuva'] = test_df['CHUVA'].map(lambda x: 0 if x <= 0 else 1)
+        cm = skl.confusion_matrix(test_df['log_chuva'], log_chuva_modelo)
+        sns_plot = sns.heatmap(cm/np.sum(cm), annot=True, fmt='.2%', cmap='Purples')
+        fig2 = sns_plot.get_figure()
+        fig2.savefig('../img/' + nom_aux + '_matrix_conf.png')
 
 
 def myfunc(argv):
