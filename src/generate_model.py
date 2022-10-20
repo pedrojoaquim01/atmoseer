@@ -13,7 +13,7 @@ import seaborn as sns
 import sklearn.metrics as skl 
 import sklearn.preprocessing as preproc
 from torch.utils.data import TensorDataset
-from pre_processamento import pre_proc
+from pre_processing import pre_proc
 import sys
 import getopt
 
@@ -204,7 +204,7 @@ def fit(epochs, lr, model, train_loader, val_loader,patience, opt_func=torch.opt
     return  model, avg_train_losses, avg_valid_losses
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------
-def modelo(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max = 0):
+def model(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max = 0):
     cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
     
     nom_aux = arquivo
@@ -397,8 +397,8 @@ def modelo(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max
         ax.legend(loc="upper left")
         fig.savefig('../img/' + nom_aux + '_Desempenho_Teste.png', bbox_inches='tight')
 
-        log_chuva_modelo =  list(map(lambda x: 0 if x <= 0 else 1,test_predictions.tolist()))
-        test_df['log_chuva'] = test_df['Chuva'].map(lambda x: 0 if x <= 0 else 1)
+        log_chuva_modelo =  list(map(lambda x: 0 if x < 5 else (1 if x >= 5 and x <= 25 else  (2 if x > 25 and x <= 50 else 3)),test_predictions.tolist()))
+        test_df['log_chuva'] = test_df['Chuva'].map(lambda x: 0 if x < 5 else (1 if x >= 5 and x <= 25 else  (2 if x > 25 and x <= 50 else 3)))
         cm = skl.confusion_matrix(test_df['log_chuva'], log_chuva_modelo)
         fig, ax = plt.subplots(1, 1, figsize=(15, 5))
         sns_plot = sns.heatmap(cm/np.sum(cm), annot=True, fmt='.2%', cmap='Purples')
@@ -428,8 +428,8 @@ def modelo(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max
         ax.legend(loc="upper left")
         fig.savefig('../img/' + nom_aux + '_Desempenho_Teste.png', bbox_inches='tight')
         
-        log_chuva_modelo =  list(map(lambda x: 0 if x <= 0 else 1,test_predictions.tolist()))
-        test_df['log_chuva'] = test_df['CHUVA'].map(lambda x: 0 if x <= 0 else 1)
+        log_chuva_modelo =  list(map(lambda x: 0 if x < 5 else (1 if x >= 5 and x <= 25 else  (2 if x > 25 and x <= 50 else 3)),test_predictions.tolist()))
+        test_df['log_chuva'] = test_df['CHUVA'].map(lambda x: 0 if x < 5 else (1 if x >= 5 and x <= 25 else  (2 if x > 25 and x <= 50 else 3)))
         cm = skl.confusion_matrix(test_df['log_chuva'], log_chuva_modelo)
         fig, ax = plt.subplots(1, 1, figsize=(15, 5))
         sns_plot = sns.heatmap(cm/np.sum(cm), annot=True, fmt='.2%', cmap='Purples')
@@ -470,7 +470,7 @@ def myfunc(argv):
         elif opt in ("-a", "--max"):
             arg_max = arg
 
-    modelo(arg_file,arg_CAPE,arg_Tempo,arg_Vento,arg_min,arg_max)
+    model(arg_file,arg_CAPE,arg_Tempo,arg_Vento,arg_min,arg_max)
 
 
 if __name__ == "__main__":

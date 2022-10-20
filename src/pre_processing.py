@@ -16,17 +16,17 @@ def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_ma
     if  mes_min != 0 and mes_max != 0:
         arq_pre_proc = arq_pre_proc + '_' + str(mes_min) + '_' + str(mes_max)
 
-    dado_proc = Path('../Dados/'+arq_pre_proc+'.csv')
+    dado_proc = Path('../data/'+arq_pre_proc+'.csv')
 
     if dado_proc.is_file():
-        fonte = '../Dados/'+arq_pre_proc+'.csv'
+        fonte = '../data/'+arq_pre_proc+'.csv'
         df = pd.read_csv(fonte)
         del df['Unnamed: 0']
         df = df.fillna(0)
         df = df.reindex(sorted(df.columns), axis=1)
         return df
     else:
-        fonte = '../Dados/'+arquivo+'.csv'
+        fonte = '../data/'+arquivo+'.csv'
         df = pd.read_csv(fonte)
         del df['Unnamed: 0']
         df = df.fillna(0)
@@ -37,7 +37,7 @@ def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_ma
         cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
         
         if(log_CAPE):
-            df_rs = pd.read_csv('../Dados/sondas_CAPE_CIN.csv')
+            df_rs = pd.read_csv('../data/sondas_CAPE_CIN.csv')
             df_rs['log_hr'] = ''
             df_rs['log_hr'] = df_rs['time'].map(lambda x: '0' if x[11:19] == '00:00:00' else '12')
 
@@ -143,5 +143,5 @@ def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_ma
             
             del df['data']
 
-        df.to_csv('../Dados/'+arq_pre_proc + '.csv')    
+        df.to_csv('../data/'+arq_pre_proc + '.csv')    
         return df
