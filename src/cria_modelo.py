@@ -105,12 +105,12 @@ class Net(nn.Module):
     def __init__(self, in_channels):
         super(Net,self).__init__()
 
-        self.conv1 = nn.Conv1d(in_channels = in_channels, out_channels = 64, kernel_size = 5, stride=1, padding=2)
+        self.conv1 = nn.Conv1d(in_channels = in_channels, out_channels = 64, kernel_size = 2, stride=1, padding=2)
         self.pool1 = nn.MaxPool1d(1)
         self.conv2 = nn.Conv1d(in_channels = 64, out_channels = 128, kernel_size = 3, stride = 1, padding=1)
         self.relu = nn.ReLU()  #function to initiate model parameters
         
-        self.fc1 = nn.Linear(768,64)
+        self.fc1 = nn.Linear(1152,64)
         self.fc2 = nn.Linear(64,1)
 
     def forward(self,x):
@@ -233,7 +233,6 @@ def modelo(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max
     else:
         df1 = df.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO'])
 
-    print(df1.info())
     d_max = df1.max()
     d_min = df1.min()
     df_norm=(df1-df1.min())/(df1.max()-df1.min())
@@ -251,9 +250,15 @@ def modelo(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max
     val_arr = np.array(val_df)
     test_arr = np.array(test_df)
 
+    print(train_df.info())
+
+    if arquivo in cor_est:
+        id_chuva = train_df.columns.get_loc("Chuva")
+    else:
+        id_chuva = train_df.columns.get_loc("CHUVA")
     # Execução do janelamento
     TIME_WINDOW_SIZE = 6    # Espaço de Janelamento
-    IDX_TARGET = 0          # Variavel a ser predita ( CHUVA )
+    IDX_TARGET = id_chuva   # Variavel a ser predita ( CHUVA )
     
     train_x, train_y = apply_windowing(train_arr, 
                                     initial_time_step=0, 
@@ -321,7 +326,7 @@ def modelo(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max
 
     # Treinamento
     n_epochs = 500
-    patience = 20
+    patience = 50
 
     model = model.float()
     model, train_loss, val_loss = fit(n_epochs, 1e-5, model, train_loader, val_loader,patience, opt_func=torch.optim.Adam)
@@ -395,9 +400,10 @@ def modelo(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max
         log_chuva_modelo =  list(map(lambda x: 0 if x <= 0 else 1,test_predictions.tolist()))
         test_df['log_chuva'] = test_df['Chuva'].map(lambda x: 0 if x <= 0 else 1)
         cm = skl.confusion_matrix(test_df['log_chuva'], log_chuva_modelo)
+        fig, ax = plt.subplots(1, 1, figsize=(15, 5))
         sns_plot = sns.heatmap(cm/np.sum(cm), annot=True, fmt='.2%', cmap='Purples')
-        fig2 = sns_plot.get_figure()
-        fig2.savefig('../img/' + nom_aux + '_matrix_conf.png')
+        fig = sns_plot.get_figure()
+        fig.savefig('../img/' + nom_aux + '_matrix_conf.png')
     else:
         # Erro médio do modelo
         test_predictions = (test_predictions * (d_max['CHUVA'] - d_min['CHUVA']) + d_min['CHUVA'])
@@ -425,9 +431,10 @@ def modelo(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max
         log_chuva_modelo =  list(map(lambda x: 0 if x <= 0 else 1,test_predictions.tolist()))
         test_df['log_chuva'] = test_df['CHUVA'].map(lambda x: 0 if x <= 0 else 1)
         cm = skl.confusion_matrix(test_df['log_chuva'], log_chuva_modelo)
+        fig, ax = plt.subplots(1, 1, figsize=(15, 5))
         sns_plot = sns.heatmap(cm/np.sum(cm), annot=True, fmt='.2%', cmap='Purples')
-        fig2 = sns_plot.get_figure()
-        fig2.savefig('../img/' + nom_aux + '_matrix_conf.png')
+        fig = sns_plot.get_figure()
+        fig.savefig('../img/' + nom_aux + '_matrix_conf.png')
 
 
 def myfunc(argv):
