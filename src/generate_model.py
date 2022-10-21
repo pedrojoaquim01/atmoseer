@@ -397,8 +397,8 @@ def model(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max 
         ax.legend(loc="upper left")
         fig.savefig('../img/' + nom_aux + '_Desempenho_Teste.png', bbox_inches='tight')
 
-        log_chuva_modelo =  list(map(lambda x: 0 if x < 5 else (1 if x >= 5 and x <= 25 else  (2 if x > 25 and x <= 50 else 3)),test_predictions.tolist()))
-        test_df['log_chuva'] = test_df['Chuva'].map(lambda x: 0 if x < 5 else (1 if x >= 5 and x <= 25 else  (2 if x > 25 and x <= 50 else 3)))
+        log_chuva_modelo =  list(map(lambda x:  0 if x <= 0 else (1 if x < 5 and x > 0 else (2 if x >= 5 and x <= 25 else  (3 if x > 25 and x <= 50 else 4))),test_predictions.tolist()))
+        test_df['log_chuva'] = test_df['Chuva'].map(lambda x:  0 if x <= 0 else (1 if x < 5 and x > 0 else (2 if x >= 5 and x <= 25 else  (3 if x > 25 and x <= 50 else 4))))
         cm = skl.confusion_matrix(test_df['log_chuva'], log_chuva_modelo)
         fig, ax = plt.subplots(1, 1, figsize=(15, 5))
         sns_plot = sns.heatmap(cm/np.sum(cm), annot=True, fmt='.2%', cmap='Purples')
@@ -428,8 +428,8 @@ def model(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max 
         ax.legend(loc="upper left")
         fig.savefig('../img/' + nom_aux + '_Desempenho_Teste.png', bbox_inches='tight')
         
-        log_chuva_modelo =  list(map(lambda x: 0 if x < 5 else (1 if x >= 5 and x <= 25 else  (2 if x > 25 and x <= 50 else 3)),test_predictions.tolist()))
-        test_df['log_chuva'] = test_df['CHUVA'].map(lambda x: 0 if x < 5 else (1 if x >= 5 and x <= 25 else  (2 if x > 25 and x <= 50 else 3)))
+        log_chuva_modelo =  list(map(lambda x:  0 if x <= 0 else (1 if x < 5 and x > 0 else (2 if x >= 5 and x <= 25 else  (3 if x > 25 and x <= 50 else 4))),test_predictions.tolist()))
+        test_df['log_chuva'] = test_df['CHUVA'].map(lambda x:  0 if x <= 0 else (1 if x < 5 and x > 0 else (2 if x >= 5 and x <= 25 else  (3 if x > 25 and x <= 50 else 4))))
         cm = skl.confusion_matrix(test_df['log_chuva'], log_chuva_modelo)
         fig, ax = plt.subplots(1, 1, figsize=(15, 5))
         sns_plot = sns.heatmap(cm/np.sum(cm), annot=True, fmt='.2%', cmap='Purples')
