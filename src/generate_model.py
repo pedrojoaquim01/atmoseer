@@ -80,7 +80,7 @@ class EarlyStopping:
             print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
         torch.save(model.state_dict(), 'Modelo.pt')
         self.val_loss_min = val_loss
-'''
+
 class Net(nn.Module):
     def __init__(self, in_channels):
         super(Net,self).__init__()
@@ -123,7 +123,7 @@ class Net(nn.Module):
         x = self.relu(x)
         x = self.fc2(x)
         return x
-
+'''
 def fit(epochs, lr, model, train_loader, val_loader,patience, opt_func=torch.optim.SGD):
     
     # to track the training loss as the model trains
@@ -229,9 +229,15 @@ def model(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max 
 
     # Normalização dos Dados
     if arquivo in cor_est:
-        df1 = df.drop(columns=['Dia','Hora','estacao','HBV'])
+        #if(log_Vento):
+        #    df1 = df.drop(columns=['Dia','Hora','estacao','HBV','VelVento','DirVento'])
+        #else:
+            df1 = df.drop(columns=['Dia','Hora','estacao','HBV'])
     else:
-        df1 = df.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO'])
+        #if(log_Vento):
+        #    df1 = df.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO','VEN_VEL','VEN_DIR'])
+        #else:
+            df1 = df.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO'])
 
     d_max = df1.max()
     d_min = df1.min()
