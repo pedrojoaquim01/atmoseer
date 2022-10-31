@@ -1,11 +1,35 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
+from math import cos, asin, sqrt
 
 
+def myFunc(e):
+  return e[:][1]
 
-def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_max = 0):
-    
+def prox(nome, num):
+  lugar = []
+  result = []
+  aux1 = pd.read_csv('../data/estacoes_local.csv')
+  aux = aux1[~aux1['files'].isin([nome])]
+  del aux['Unnamed: 0']
+  for loc in aux['DC_NOME']:
+      p = 0.017453292519943295
+      alvo = aux1[aux1['files'] == nome]
+      est = aux[aux['DC_NOME'] == loc]
+
+      hav = 0.5 - cos((est.VL_LATITUDE.iloc[0]-alvo.VL_LATITUDE.iloc[0])*p)/2 + cos(alvo.VL_LATITUDE.iloc[0]*p)*cos(est.VL_LATITUDE.iloc[0]*p) * (1-cos((est.VL_LONGITUDE.iloc[0]-alvo.VL_LONGITUDE.iloc[0])*p)) / 2
+      
+      dist = 12742 * asin(sqrt(hav))
+      lugar = lugar + [(est.files.iloc[0],dist)]
+      lugar.sort(key=myFunc) 
+      lugar = lugar[0:num]  
+      result = [i[0] for i in lugar]
+  print(result)
+  return result
+
+def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_max = 0, sta = 0):
+    sta = int(sta)
     arq_pre_proc = arquivo
     if(log_CAPE):
         arq_pre_proc = arq_pre_proc + '_CAPE'
@@ -15,6 +39,8 @@ def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_ma
         arq_pre_proc = arq_pre_proc + '_TEMP'
     if  mes_min != 0 and mes_max != 0:
         arq_pre_proc = arq_pre_proc + '_' + str(mes_min) + '_' + str(mes_max)
+    if  sta > 0:
+        arq_pre_proc = arq_pre_proc + '_' + str(sta)
 
     dado_proc = Path('../data/'+arq_pre_proc+'.csv')
 
@@ -125,15 +151,13 @@ def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_ma
             
             print('Log: Variavel Tempo sem problema')
 
-        
-
-        if  mes_min != 0 and mes_max != 0:
-            if arquivo in cor_est:
-                df['data'] = pd.to_datetime(df['Dia'] +' '+ df['Hora'], format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
-            else:
-                df['data'] = pd.to_datetime(df['DT_MEDICAO'] + ' '+ df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
+        if arquivo in cor_est:
+            df['data'] = pd.to_datetime(df['Dia'] +' '+ df['Hora'], format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
+        else:
+            df['data'] = pd.to_datetime(df['DT_MEDICAO'] + ' '+ df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
             
 
+        if  mes_min != 0 and mes_max != 0:
             if int(mes_min) > int(mes_max):
                 print('Min > Max')
                 df = df[~((df.data.dt.month > int(mes_max)) & (df.data.dt.month < int(mes_min)))]
@@ -142,6 +166,35 @@ def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_ma
                 df = df[(df.data.dt.month > int(mes_min)) & (df.data.dt.month < int(mes_max))]
             
             del df['data']
+        
+        if(sta > 0):
+            print('Entrou sta')
+            result = prox(arquivo,sta)
+            for s in result:
+                fonte = '../data/'+s+'.csv'
+                df1 = pd.read_csv(fonte)
+                df1 = df1.fillna(0)
+                del df1['Unnamed: 0']
+                
+                if s in cor_est:
+                    df1['data'] = pd.to_datetime(df1['Dia'] +' '+ df1['Hora'], format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
+                else:
+                    df1['data'] = pd.to_datetime(df1['DT_MEDICAO'] + ' '+ df1['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df1['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
+                
+                if s in cor_est:
+                    df1 = df1.drop(columns=['Dia','Hora','estacao','HBV'])
+                else:
+                    df1 = df1.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO'])
+                df1 = df1.add_suffix('_' + s)
+                df1 = df1.rename(columns={"data_" + s : "data"})
+                
+                df = pd.merge(df,df1, how = 'outer')
+                df = df.fillna(0)
 
+                if arquivo in cor_est:
+                  df = df.sort_values(by=['Dia','Hora'])
+                else:
+                  df = df.sort_values(by=['DT_MEDICAO','HR_MEDICAO'])
+        
         df.to_csv('../data/'+arq_pre_proc + '.csv')    
         return df

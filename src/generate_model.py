@@ -204,7 +204,7 @@ def fit(epochs, lr, model, train_loader, val_loader,patience, opt_func=torch.opt
     return  model, avg_train_losses, avg_valid_losses
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------
-def model(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max = 0):
+def model(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max = 0, sta = 0):
     cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
     
     nom_aux = arquivo
@@ -216,11 +216,18 @@ def model(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max 
         nom_aux = nom_aux + '_TEMP'
     if  mes_min != 0 and mes_max != 0:
         nom_aux = nom_aux + '_' + str(mes_min) + '_' + str(mes_max)
+    if int(sta) > 0:
+        nom_aux = nom_aux + '_' + sta
+        
 
 
     # Pré processamento
-    df = pre_proc(arquivo,log_CAPE,log_Vento,log_Tempo,mes_min,mes_max)
+    df = pre_proc(arquivo,log_CAPE,log_Vento,log_Tempo,mes_min,mes_max,sta)
     print(df.describe())
+    print(df.info())
+
+    if int(sta) > 0:
+        df = df.drop(columns=['data'])
 
     if log_CAPE:
         df['CAPE'][0] = 0
@@ -239,9 +246,12 @@ def model(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max 
         #else:
             df1 = df.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO'])
 
+
+    print(df1.info())
     d_max = df1.max()
     d_min = df1.min()
     df_norm=(df1-df1.min())/(df1.max()-df1.min())
+    df_norm=df_norm.dropna(how='all', axis=1)
 
     # Separação dos Dados
     n = len(df_norm)
@@ -450,11 +460,12 @@ def myfunc(argv):
     arg_Vento = 0
     arg_min = 0
     arg_max = 0
-    arg_help = "{0} -f <file> -c <log_CAPE> -t <log_Time> -w <log_Wind>".format(argv[0])
+    arg_sta = 0
+    arg_help = "{0} -f <file> -c <log_CAPE> -t <log_Time> -w <log_Wind> -s <sta>".format(argv[0])
     
     try:
-        opts, args = getopt.getopt(argv[1:], "hf:c:t:w:i:a:", ["help", "file=", 
-        "cape=", "time=", "wind=", "min=", "max="])
+        opts, args = getopt.getopt(argv[1:], "hf:c:t:w:i:a:s:", ["help", "file=", 
+        "cape=", "time=", "wind=", "min=", "max=", "sta="])
     except:
         print(arg_help)
         sys.exit(2)
@@ -475,8 +486,10 @@ def myfunc(argv):
             arg_min = arg
         elif opt in ("-a", "--max"):
             arg_max = arg
+        elif opt in ("-s", "--sta"):
+            arg_sta = arg
 
-    model(arg_file,arg_CAPE,arg_Tempo,arg_Vento,arg_min,arg_max)
+    model(arg_file,arg_CAPE,arg_Tempo,arg_Vento,arg_min,arg_max,arg_sta)
 
 
 if __name__ == "__main__":
