@@ -16,8 +16,17 @@ from torch.utils.data import TensorDataset
 from pre_processing import pre_proc
 import sys
 import getopt
+import logging, argparse, time
 
 #-------------------------------------------------- Criação de funções e classes -----------------------------------------------------------------------------------------------------
+
+
+logging.basicConfig(filename='../log/log.txt',
+                    filemode='a',
+                    format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                    datefmt='%H:%M:%S',
+                    level=logging.DEBUG)
+
 
 #Função de Janelamento
 def apply_windowing(X, initial_time_step, max_time_step, window_size, idx_target):
@@ -393,10 +402,11 @@ def model(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max 
         test_predictions = (test_predictions * (d_max['Chuva'] - d_min['Chuva']) + d_min['Chuva'])
         erro_absoluto = skl.mean_squared_error(test_df['Chuva'], test_predictions)
         print('Erro Absoluto do modelo:')
-        hs = open("../log/log_experimentos.txt","a")
+        hs = open("../log/log_MSE.txt","a")
         hs.write('\n' + nom_aux + ': ' + str(erro_absoluto))
-        hs.close() 
+        hs.close()  
         print(erro_absoluto)
+        logging.info('MSE_Model - '+  nom_aux + ': ' + str(erro_absoluto))
 
         # Visualização do desempenho do modelo
         fig, ax = plt.subplots(1, 1, figsize=(15, 5))
@@ -420,15 +430,18 @@ def model(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max 
         sns_plot = sns.heatmap(cm/np.sum(cm), annot=True, fmt='.2%', cmap='Purples')
         fig = sns_plot.get_figure()
         fig.savefig('../img/' + nom_aux + '_matrix_conf.png')
+
+        return erro_absoluto
     else:
         # Erro médio do modelo
         test_predictions = (test_predictions * (d_max['CHUVA'] - d_min['CHUVA']) + d_min['CHUVA'])
         erro_absoluto = skl.mean_squared_error(test_df['CHUVA'], test_predictions)
         print('Erro Absoluto do modelo:')
-        hs = open("../log/log_experimentos.txt","a")
+        hs = open("../log/log_MSE.txt","a")
         hs.write('\n' + nom_aux + ': ' + str(erro_absoluto))
         hs.close() 
         print(erro_absoluto)
+        logging.info('MSE_Model - '+  nom_aux + ': ' + str(erro_absoluto))
 
         fig, ax = plt.subplots(1, 1, figsize=(15, 5))
         ax.plot(train_df['DT_MEDICAO'], train_df['CHUVA'], lw=2, label='train data')
@@ -451,6 +464,8 @@ def model(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max 
         sns_plot = sns.heatmap(cm/np.sum(cm), annot=True, fmt='.2%', cmap='Purples')
         fig = sns_plot.get_figure()
         fig.savefig('../img/' + nom_aux + '_matrix_conf.png')
+        
+        return erro_absoluto
 
 
 def myfunc(argv):

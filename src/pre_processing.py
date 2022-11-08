@@ -190,7 +190,7 @@ def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_ma
                 
                 df = pd.merge(df,df1, how = 'outer')
                 df = df.fillna(0)
-
+                
                 if arquivo in cor_est:
                   df = df.sort_values(by=['Dia','Hora'])
                 else:
