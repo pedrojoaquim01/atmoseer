@@ -1,5 +1,4 @@
 import pandas as pd
-import xarray as xr
 import numpy as np
 import sys, getopt, os, re
 
@@ -98,19 +97,27 @@ def gera_dataset(nom_estacao, ano, mes):
     return data_aux
 
 
-def processamento(nom_estacao):
+def processamento(nom_estacao, all = 0):
     ano  = list(map(str,range(1997,2022)))
     mes = list(range(1,13))
     mes = [str(i).rjust(2, '0') for i in mes]
 
-    corrige_txt(nom_estacao, ano, mes)
-    
-    data = gera_dataset(nom_estacao, ano, mes)
-    del data
-
+    if all < 1:
+        corrige_txt(nom_estacao, ano, mes)
+        
+        data = gera_dataset(nom_estacao, ano, mes)
+        del data
+    else:
+        cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
+        for i in cor_est:
+            corrige_txt(nom_estacao, ano, mes)
+            
+            data = gera_dataset(nom_estacao, ano, mes)
+            del data
 
 def myfunc(argv):
     arg_file = ""
+    arg_all = 0
     arg_help = "{0} -s <station> -a <all>".format(argv[0])
     
     try:
@@ -126,12 +133,12 @@ def myfunc(argv):
         elif opt in ("-s", "--sta"):
             arg_file = arg
         elif opt in ("-a", "--all"):
-            arg_file = arg
+            arg_all = 1
 
     if arg_file == '':
         print('Digite alguma das estações : alto_da_boa_vista, guaratiba, iraja, jardim_botanico, riocentro, santa_cruz, sao_cristovao, vidigal')
     else:
-        processamento(arg_file)
+        processamento(arg_file,arg_all)
 
 
 if __name__ == "__main__":

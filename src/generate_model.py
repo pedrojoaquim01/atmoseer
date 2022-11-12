@@ -25,7 +25,7 @@ logging.basicConfig(filename='../log/log.txt',
                     filemode='a',
                     format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                     datefmt='%H:%M:%S',
-                    level=logging.DEBUG)
+                    level=logging.INFO)
 
 
 #Função de Janelamento
@@ -213,35 +213,17 @@ def fit(epochs, lr, model, train_loader, val_loader,patience, opt_func=torch.opt
     return  model, avg_train_losses, avg_valid_losses
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------
-def model(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max = 0, sta = 0):
+def model(arquivo):
     cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
     
     nom_aux = arquivo
-    if(log_CAPE):
-        nom_aux = nom_aux + '_CAPE'
-    if(log_Vento):
-        nom_aux = nom_aux + '_VENT'
-    if(log_Tempo):
-        nom_aux = nom_aux + '_TEMP'
-    if  mes_min != 0 and mes_max != 0:
-        nom_aux = nom_aux + '_' + str(mes_min) + '_' + str(mes_max)
-    if int(sta) > 0:
-        nom_aux = nom_aux + '_' + sta
         
 
-
     # Pré processamento
-    df = pre_proc(arquivo,log_CAPE,log_Vento,log_Tempo,mes_min,mes_max,sta)
+    df = pd.read_csv('../data/'+ arquivo +'.csv')
+    del df['data']
     print(df.describe())
     print(df.info())
-
-    if int(sta) > 0:
-        df = df.drop(columns=['data'])
-
-    if log_CAPE:
-        df['CAPE'][0] = 0
-        df['CIN'][0] = 0
-        df = df.interpolate(method='linear')
 
     # Normalização dos Dados
     if arquivo in cor_est:
@@ -470,17 +452,10 @@ def model(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0, mes_min = 0,mes_max 
 
 def myfunc(argv):
     arg_file = ""
-    arg_CAPE = 0
-    arg_Tempo = 0
-    arg_Vento = 0
-    arg_min = 0
-    arg_max = 0
-    arg_sta = 0
-    arg_help = "{0} -f <file> -c <log_CAPE> -t <log_Time> -w <log_Wind> -s <sta>".format(argv[0])
+    arg_help = "{0} -f <file>".format(argv[0])
     
     try:
-        opts, args = getopt.getopt(argv[1:], "hf:c:t:w:i:a:s:", ["help", "file=", 
-        "cape=", "time=", "wind=", "min=", "max=", "sta="])
+        opts, args = getopt.getopt(argv[1:], "hf:", ["help", "file="])
     except:
         print(arg_help)
         sys.exit(2)
@@ -491,20 +466,9 @@ def myfunc(argv):
             sys.exit(2)
         elif opt in ("-f", "--file"):
             arg_file = arg
-        elif opt in ("-c", "--cape"):
-            arg_CAPE = arg
-        elif opt in ("-t", "--time"):
-            arg_Tempo = arg
-        elif opt in ("-w", "--wind"):
-            arg_Vento = arg
-        elif opt in ("-i", "--min"):
-            arg_min = arg
-        elif opt in ("-a", "--max"):
-            arg_max = arg
-        elif opt in ("-s", "--sta"):
-            arg_sta = arg
+        
 
-    model(arg_file,arg_CAPE,arg_Tempo,arg_Vento,arg_min,arg_max,arg_sta)
+    model(arg_file)
 
 
 if __name__ == "__main__":

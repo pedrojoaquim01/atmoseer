@@ -2,9 +2,11 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from math import cos, asin, sqrt
+import sys
+import getopt
 
 
-def myFunc(e):
+def myFunc2(e):
   return e[:][1]
 
 def prox(nome, num):
@@ -22,7 +24,7 @@ def prox(nome, num):
       
       dist = 12742 * asin(sqrt(hav))
       lugar = lugar + [(est.files.iloc[0],dist)]
-      lugar.sort(key=myFunc) 
+      lugar.sort(key=myFunc2) 
       lugar = lugar[0:num]  
       result = [i[0] for i in lugar]
   print(result)
@@ -115,7 +117,9 @@ def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_ma
                         df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'CIN'] = np.nan
                     else:
                         df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'CIN']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['CIN'].unique()[0]
-            
+            df['CAPE'][0] = 0
+            df['CIN'][0] = 0
+            df = df.interpolate(method='linear')
             print('Log: Variavel CAPE sem problema')
 
         if(log_Vento):
@@ -195,6 +199,50 @@ def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_ma
                   df = df.sort_values(by=['Dia','Hora'])
                 else:
                   df = df.sort_values(by=['DT_MEDICAO','HR_MEDICAO'])
-        
+                  
+        del df['data']
         df.to_csv('../data/'+arq_pre_proc + '.csv')    
         return df
+
+
+def myfunc(argv):
+    arg_file = ""
+    arg_CAPE = 0
+    arg_Tempo = 0
+    arg_Vento = 0
+    arg_min = 0
+    arg_max = 0
+    arg_sta = 0
+    arg_help = "{0} -f <file> -c <log_CAPE> -t <log_Time> -w <log_Wind> -s <sta>".format(argv[0])
+    
+    try:
+        opts, args = getopt.getopt(argv[1:], "hf:c:t:w:i:a:s:", ["help", "file=", 
+        "cape=", "time=", "wind=", "min=", "max=", "sta="])
+    except:
+        print(arg_help)
+        sys.exit(2)
+    
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
+            print(arg_help)  # print the help message
+            sys.exit(2)
+        elif opt in ("-f", "--file"):
+            arg_file = arg
+        elif opt in ("-c", "--cape"):
+            arg_CAPE = arg
+        elif opt in ("-t", "--time"):
+            arg_Tempo = arg
+        elif opt in ("-w", "--wind"):
+            arg_Vento = arg
+        elif opt in ("-i", "--min"):
+            arg_min = arg
+        elif opt in ("-a", "--max"):
+            arg_max = arg
+        elif opt in ("-s", "--sta"):
+            arg_sta = arg
+
+    pre_proc(arg_file,arg_CAPE,arg_Tempo,arg_Vento,arg_min,arg_max,arg_sta)
+
+
+if __name__ == "__main__":
+    myfunc(sys.argv)
