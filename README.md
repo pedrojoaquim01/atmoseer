@@ -14,11 +14,26 @@ O projeto possue 3 tipos de código que podem ser executados, Importação de da
 #### Importação de Dados
 No projeto existem 3 diferentes script de importação de dados, para estações do COR, estações do INMET e estações de Radiossonda. Eles são responsáveis por gerar os conjuntos de dados que serão utilizados para o treinamento do modelo.
 
-O script `Python estacoes_cor.py` possui um argumento `-s` ou `--sta` que define qual estação será selecionada. É preciso escolher entre as estações meteorológicas através do nome: alto_da_boa_vista, guaratiba, iraja, jardim_botanico, riocentro, santa_cruz, sao_cristovao, vidigal
+O script **_estacoes_cor.py_** possui um argumento `-s` ou `--sta` que define qual estação será selecionada. É preciso escolher entre as estações meteorológicas através do nome: alto_da_boa_vista, guaratiba, iraja, jardim_botanico, riocentro, santa_cruz, sao_cristovao, vidigal.
+Exemplo de Execução:
 
-O script `Python estacoes_inmet.py` possui um argumento `-s` ou `--sta`, que define qual estação será selecionada, e o argumento `-a` ou `--all`, que caso selecionado traz todas as estações. É preciso escolher entre as estações meteorológicas através do seu código: A652 (Forte de Copacabana), A636 (Jacarepagua), A621 (Vila Militar), A602 (Marambaia)
+`Python estacoes_cor.py -s sao_cristovao`
 
-O script `Python estacoes_rad.py` não possui argumentos ao rodar será gerado o conjunto de dados da radiossonda do Aeroporto do Galeão.
+Será importado o conjunto de dados da estação de São Cristóvão para a pasta de dados do projeto.
+
+O script **_estacoes_inmet.py_** possui um argumento `-s` ou `--sta`, que define qual estação será selecionada, e o argumento `-a` ou `--all`, que caso selecionado traz todas as estações. É preciso escolher entre as estações meteorológicas através do seu código: A652 (Forte de Copacabana), A636 (Jacarepagua), A621 (Vila Militar), A602 (Marambaia)
+Exemplo de Execução:
+
+`Python estacoes_inmet.py -s A652`
+
+Será importado o conjunto de dados da estação do Forte de Copacabana para a pasta de dados do projeto.
+
+O script **_estacoes_rad.py_** não possui argumentos ao rodar será gerado o conjunto de dados da radiossonda do Aeroporto do Galeão.
+Exemplo de Execução:
+
+`Python estacoes_rad.py`
+
+Será importado o conjunto de dados da radiossonda do Aeroporto do Galeão para a pasta de dados do projeto.
 
 Todos os conjuntos de dados gerados pelos códigos estarão alocados na pasta `./dados` do projeto 
 
@@ -34,9 +49,23 @@ Os argumentos são:
 -  `-s` ou `--sta` Que define quantas estações próximas serão agregadas ao conjunto de dados
 Exemplo de Execução:
   
-  `Python pre_processing.py -f 'RIO DE JANEIRO - FORTE DE COPACABANA_1997_2022' -c 0 -t 1 -w 1 -i 10 -a 5 `
+  `Python pre_processing.py -f 'RIO DE JANEIRO - FORTE DE COPACABANA_1997_2022' -c 1 -t 1 -w 1`
 
 Será criado um conjunto de dados da estação do Forte de Copacabana, com dados apenas de Outubro até Março e serão inclusos as variáveis de Tempo e Vento.
  
 #### Geração do modelo
-O script de geração de modelo é responsável por realizar o treinamento e exportar os resultados obtidos pelo modelo após o teste. Ele pode ser executado através do comando  `Python cria_modelo.py`, que necessita de um argumento obrigatório  `-f` ou `--file`, o argumento recebe o nome de um dos conjuntos de dados disponíveis na pasta `./dados` do projeto. O
+O script de geração de modelo é responsável por realizar o treinamento e exportar os resultados obtidos pelo modelo após o teste. Ele pode ser executado através do comando  `Python cria_modelo.py`, que necessita de um argumento obrigatório  `-f` ou `--file`, o argumento recebe o nome de um dos conjuntos de dados disponíveis na pasta `./dados` do projeto. 
+Exemplo de Execução:
+
+`Python cria_modelo.py -f 'RIO DE JANEIRO - FORTE DE COPACABANA_1997_2022_CAPE_VENT_TEMP'`
+
+Será criado um modelo baseado no conjunto de dados da estação do Forte de Copacabana já processado
+
+
+### Exemplo de teste do sistema
+
+Importação : `Python estacoes_inmet.py -s A652`
+
+Pré processamento : `Python pre_processing.py -f 'RIO DE JANEIRO - FORTE DE COPACABANA_1997_2022' -c 1 -t 1 -w 1`
+
+Geração do modelo : `Python cria_modelo.py -f 'RIO DE JANEIRO - FORTE DE COPACABANA_1997_2022_CAPE_VENT_TEMP'`
