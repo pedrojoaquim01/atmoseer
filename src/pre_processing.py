@@ -65,7 +65,7 @@ def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_ma
         cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
         
         if(log_CAPE):
-            df_rs = pd.read_csv('../data/sondas_CAPE_CIN.csv')
+            df_rs = pd.read_csv('../data/sondas_completo.csv')
             df_rs['log_hr'] = ''
             df_rs['log_hr'] = df_rs['time'].map(lambda x: '0' if x[11:19] == '00:00:00' else '12')
 
@@ -106,7 +106,52 @@ def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_ma
                         df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'CIN'] = np.nan
                     else:
                         df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'CIN']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['CIN'].unique()[0]
-                        
+                    
+                    #-------- Novos Campos ----------------------- 0h --------------------------------------------    
+                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['showalter'].unique().size == 0:
+                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'showalter'] = np.nan
+                    else:
+                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'showalter']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['showalter'].unique()[0]
+                    
+                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['lift_index'].unique().size == 0:
+                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'lift_index'] = np.nan
+                    else:
+                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'lift_index']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['lift_index'].unique()[0]
+                    
+                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['k_index'].unique().size == 0:
+                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'k_index'] = np.nan
+                    else:
+                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'k_index']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['k_index'].unique()[0]
+                    
+                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['total_totals'].unique().size == 0:
+                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'total_totals'] = np.nan
+                    else:
+                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'total_totals']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['total_totals'].unique()[0]
+                    
+                    #-------- 12h ---------#
+
+                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['showalter'].unique().size == 0:
+                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'showalter'] = np.nan
+                    else:
+                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'showalter']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['showalter'].unique()[0]
+                    
+                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['lift_index'].unique().size == 0:
+                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'lift_index'] = np.nan
+                    else:
+                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'lift_index']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['lift_index'].unique()[0]
+                    
+                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['k_index'].unique().size == 0:
+                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'k_index'] = np.nan
+                    else:
+                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'k_index']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['k_index'].unique()[0]
+                    
+                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['total_totals'].unique().size == 0:
+                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'total_totals'] = np.nan
+                    else:
+                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'total_totals']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['total_totals'].unique()[0]
+                    
+
+                    #-----------------------------------------------------------------------------------------
 
                     if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['CAPE'].unique().size == 0:    
                         df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'CAPE'] = np.nan

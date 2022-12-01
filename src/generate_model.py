@@ -27,6 +27,67 @@ logging.basicConfig(filename='../log/log.txt',
                     datefmt='%H:%M:%S',
                     level=logging.INFO)
 
+def precisao_categoria (a,b):  
+  a0 = []
+  a1 = []
+  a2 = []
+  a3 = []
+  a4 = []
+
+  for i in a:
+    if i == 0:
+      a0 = a0 + [i]
+    if i == 1:
+      a1 = a1 + [i]
+    if i == 2:
+      a2 = a2 + [i]
+    if i == 3:
+      a3 = a3 + [i]
+    if i == 4:
+      a4 = a4 + [i]
+
+  b0 = []
+  b1 = []
+  b2 = []
+  b3 = []
+  b4 = []
+  rg = len(a0)
+  for i in range(rg):
+    b0 = b0 + [b[i]]
+
+  for i in range(rg, rg + len(a1)):
+    b1 = b1 + [b[i]]
+    
+  rg = rg + len(a1)
+
+  for i in range(rg, rg + len(a2)):
+    b2 = b2 + [b[i]]
+
+  rg = rg + len(a2)
+
+  for i in range(rg, rg + len(a3)):
+    b3 = b3 + [b[i]]
+    
+  rg = rg + len(a3)
+
+  for i in range(rg, rg + len(a4)):
+    b4 = b4 + [b[i]]
+
+  print('Previsão de 0 : ' )  
+  dif_porc(a0,b0)
+  print('\n Previsão de 1')
+  dif_porc(a1,b1)
+  print('\n Previsão de 2')
+  dif_porc(a2,b2)
+  print('\n Previsão de 3')
+  dif_porc(a3,b3)
+  print('\n Previsão de 4')
+  dif_porc(a4,b4)
+
+def dif_porc(a,b):
+  df1=pd.DataFrame(a, columns=['A'])
+  df2=pd.DataFrame(b, columns=['B'])
+  print((df2.eq(df1.values).mean() * 100).values[0])
 
 #Função de Janelamento
 def apply_windowing(X, initial_time_step, max_time_step, window_size, idx_target):
@@ -221,10 +282,11 @@ def model(arquivo):
 
     # Pré processamento
     df = pd.read_csv('../data/'+ arquivo +'.csv')
-    del df['data']
+    #del df['data']
+    df = df.fillna(0)
     print(df.describe())
     print(df.info())
-
+    
     # Normalização dos Dados
     if arquivo in cor_est:
         #if(log_Vento):
@@ -412,6 +474,8 @@ def model(arquivo):
         sns_plot = sns.heatmap(cm/np.sum(cm), annot=True, fmt='.2%', cmap='Purples')
         fig = sns_plot.get_figure()
         fig.savefig('../img/' + nom_aux + '_matrix_conf.png')
+        
+        precisao_categoria(test_df['log_chuva'],log_chuva_modelo)
 
         return erro_absoluto
     else:
@@ -447,6 +511,8 @@ def model(arquivo):
         fig = sns_plot.get_figure()
         fig.savefig('../img/' + nom_aux + '_matrix_conf.png')
         
+        precisao_categoria(test_df['log_chuva'],log_chuva_modelo)
+
         return erro_absoluto
 
 

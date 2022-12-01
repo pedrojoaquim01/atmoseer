@@ -1,0 +1,24 @@
+Todos os indexes de radiossondas
+        Previsão de 0 : 
+        24.843846221518433
+
+        Previsão de 1
+        66.43109540636041
+
+        Previsão de 2
+        0.0
+
+        Previsão de 3
+        0.0
+Apenas CAPE e CIN na previsão
+        Previsão de 0 : 
+        31.301134864080232
+
+        Previsão de 1
+        65.60659599528857
+
+        Previsão de 2
+        0.0
+
+        Previsão de 3
+        0.0
