@@ -22,3 +22,30 @@ Apenas CAPE e CIN na previsão
 
         Previsão de 3
         0.0
+
+Uso do Modelo COPACABANA_1997_2022_ERA5
+        Previsão de 0 : 
+        20.98178939034046
+
+        Previsão de 1
+        73.38044758539458
+
+        Previsão de 2
+        0.0
+
+        Previsão de 3
+        0.0
+
+
+Usando do ERA 5 e com todos os dados de radiossondas
+        Previsão de 0 : 
+        14.718043459136096
+
+        Previsão de 1
+        87.39693757361601
+
+        Previsão de 2
+        0.0
+
+        Previsão de 3
+        0.0

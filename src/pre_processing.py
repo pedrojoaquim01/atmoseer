@@ -30,11 +30,13 @@ def prox(nome, num):
   print(result)
   return result
 
-def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_max = 0, sta = 0):
+def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_max = 0, sta = 0, log_era = 0):
     sta = int(sta)
     arq_pre_proc = arquivo
+    if(log_era):
+        arq_pre_proc = arq_pre_proc + '_ERA5'
     if(log_CAPE):
-        arq_pre_proc = arq_pre_proc + '_CAPE'
+        arq_pre_proc = arq_pre_proc + '_RAD'
     if(log_Vento):
         arq_pre_proc = arq_pre_proc + '_VENT'
     if(log_Tempo):
@@ -64,107 +66,66 @@ def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_ma
 
         cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
         
+        if(log_era):
+            df_era = pd.read_csv('../data/Forte_Cop_ERA5.csv')
+            del df_era['Unnamed: 0']
+            
+            if arquivo in cor_est:
+                df['time'] = pd.to_datetime(df['Dia'] +' '+ df['Hora'], format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
+            else:
+                df['time'] = pd.to_datetime(df['DT_MEDICAO'] + ' '+ df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
+            
+            df_era['time'] = pd.to_datetime(df_era['time'].astype(str))
+            
+            df = df.merge(df_era,on='time',how='left')
+
+            df['Geopotential_1000'] = df['Geopotential_1000'].interpolate(method='linear')
+            df['Humidity_1000'] = df['Humidity_1000'].interpolate(method='linear')
+            df['Temperature_1000'] = df['Temperature_1000'].interpolate(method='linear')
+            df['WindU_1000'] = df['WindU_1000'].interpolate(method='linear')
+            df['WindV_1000'] = df['WindV_1000'].interpolate(method='linear')
+            
+            df['Geopotential_700'] = df['Geopotential_700'].interpolate(method='linear')
+            df['Humidity_700'] = df['Humidity_700'].interpolate(method='linear')
+            df['Temperature_700'] = df['Temperature_700'].interpolate(method='linear')
+            df['WindU_700'] = df['WindU_700'].interpolate(method='linear')
+            df['WindV_700'] = df['WindV_700'].interpolate(method='linear')
+
+            df['Geopotential_200'] = df['Geopotential_200'].interpolate(method='linear')
+            df['Humidity_200'] = df['Humidity_200'].interpolate(method='linear')
+            df['Temperature_200'] = df['Temperature_200'].interpolate(method='linear')
+            df['WindU_200'] = df['WindU_200'].interpolate(method='linear')
+            df['WindV_200'] = df['WindV_200'].interpolate(method='linear')
+
+            df = df.fillna(0)
+            del df['time']
+            print('Log: Variavel ERA5 sem problema')
+            
         if(log_CAPE):
             df_rs = pd.read_csv('../data/sondas_completo.csv')
             df_rs['log_hr'] = ''
             df_rs['log_hr'] = df_rs['time'].map(lambda x: '0' if x[11:19] == '00:00:00' else '12')
-
-            df['CAPE'] = np.nan
-            df['CIN'] = np.nan
-
+           
             if arquivo in cor_est:
-                for i in df_rs.date.unique():
-                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['CAPE'].unique().size == 0:
-                        df.loc[(df['Dia'] == i) & (df['Hora'] == '00:00:00'),'CAPE'] = np.nan
-                    else:
-                        df.loc[(df['Dia'] == i) & (df['Hora'] == '00:00:00'),'CAPE'] = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['CAPE'].unique()[0]
-                    
-                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['CIN'].unique().size == 0:
-                        df.loc[(df['Dia'] == i) & (df['Hora'] == '00:00:00'),'CIN'] = np.nan
-                    else:
-                        df.loc[(df['Dia'] == i) & (df['Hora'] == '00:00:00'),'CIN']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['CIN'].unique()[0]
-                        
+                df['time'] = pd.to_datetime(df['Dia'] +' '+ df['Hora'], format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
+            else:
+                df['time'] = pd.to_datetime(df['DT_MEDICAO'] + ' '+ df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
+            
+            			
+            df_rs_aux = df_rs[['time','CAPE','CIN','showalter','lift_index','k_index','total_totals']]
+            df_rs_aux = df_rs_aux.drop_duplicates()
+            df_rs_aux['time'] = pd.to_datetime(df_rs_aux['time'].astype(str))
 
-                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['CAPE'].unique().size == 0:    
-                        df.loc[(df['Dia'] == i) & (df['Hora'] == '12:00:00'),'CAPE'] = np.nan
-                    else:
-                        df.loc[(df['Dia'] == i) & (df['Hora'] == '12:00:00'),'CAPE'] = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['CAPE'].unique()[0]
-
-                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['CIN'].unique().size == 0:    
-                        df.loc[(df['Dia'] == i) & (df['Hora'] == '12:00:00'),'CIN'] = np.nan
-                    else:
-                        df.loc[(df['Dia'] == i) & (df['Hora'] == '12:00:00'),'CIN']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['CIN'].unique()[0]
-
-            else:    
-                for i in df_rs.date.unique():
-                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['CAPE'].unique().size == 0:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'CAPE'] = np.nan
-                    else:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'CAPE'] = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['CAPE'].unique()[0]
-                    
-                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['CIN'].unique().size == 0:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'CIN'] = np.nan
-                    else:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'CIN']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['CIN'].unique()[0]
-                    
-                    #-------- Novos Campos ----------------------- 0h --------------------------------------------    
-                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['showalter'].unique().size == 0:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'showalter'] = np.nan
-                    else:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'showalter']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['showalter'].unique()[0]
-                    
-                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['lift_index'].unique().size == 0:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'lift_index'] = np.nan
-                    else:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'lift_index']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['lift_index'].unique()[0]
-                    
-                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['k_index'].unique().size == 0:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'k_index'] = np.nan
-                    else:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'k_index']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['k_index'].unique()[0]
-                    
-                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['total_totals'].unique().size == 0:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'total_totals'] = np.nan
-                    else:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 0),'total_totals']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '0')]['total_totals'].unique()[0]
-                    
-                    #-------- 12h ---------#
-
-                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['showalter'].unique().size == 0:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'showalter'] = np.nan
-                    else:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'showalter']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['showalter'].unique()[0]
-                    
-                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['lift_index'].unique().size == 0:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'lift_index'] = np.nan
-                    else:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'lift_index']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['lift_index'].unique()[0]
-                    
-                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['k_index'].unique().size == 0:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'k_index'] = np.nan
-                    else:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'k_index']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['k_index'].unique()[0]
-                    
-                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['total_totals'].unique().size == 0:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'total_totals'] = np.nan
-                    else:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'total_totals']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['total_totals'].unique()[0]
-                    
-
-                    #-----------------------------------------------------------------------------------------
-
-                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['CAPE'].unique().size == 0:    
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'CAPE'] = np.nan
-                    else:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'CAPE'] = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['CAPE'].unique()[0]
-
-                    if df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['CIN'].unique().size == 0:    
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'CIN'] = np.nan
-                    else:
-                        df.loc[(df['DT_MEDICAO'] == i) & (df['HR_MEDICAO'] == 1200),'CIN']  = df_rs[(df_rs['date'] == i) & (df_rs['log_hr'] == '12')]['CIN'].unique()[0]
-            df['CAPE'][0] = 0
-            df['CIN'][0] = 0
-            df = df.interpolate(method='linear')
+            df = df.merge(df_rs_aux,on='time',how='left')
+            
+            df['CAPE'] = df['CAPE'].interpolate(method='linear')
+            df['CIN'] = df['CIN'].interpolate(method='linear')
+            df['showalter'] = df['showalter'].interpolate(method='linear')
+            df['lift_index'] = df['lift_index'].interpolate(method='linear')
+            df['k_index'] = df['k_index'].interpolate(method='linear')
+            df['total_totals'] = df['total_totals'].interpolate(method='linear')
+            df = df.fillna(0)
+            del df['time']
             print('Log: Variavel CAPE sem problema')
 
         if(log_Vento):
@@ -258,11 +219,12 @@ def myfunc(argv):
     arg_min = 0
     arg_max = 0
     arg_sta = 0
-    arg_help = "{0} -f <file> -c <log_CAPE> -t <log_Time> -w <log_Wind> -s <sta>".format(argv[0])
+    arg_era = 0
+    arg_help = "{0} -f <file> -c <log_CAPE> -t <log_Time> -w <log_Wind> -s <sta> -e <log_era>".format(argv[0])
     
     try:
-        opts, args = getopt.getopt(argv[1:], "hf:c:t:w:i:a:s:", ["help", "file=", 
-        "cape=", "time=", "wind=", "min=", "max=", "sta="])
+        opts, args = getopt.getopt(argv[1:], "hf:c:t:w:i:a:s:e:", ["help", "file=", 
+        "cape=", "time=", "wind=", "min=", "max=", "sta=", "era="])
     except:
         print(arg_help)
         sys.exit(2)
@@ -285,8 +247,10 @@ def myfunc(argv):
             arg_max = arg
         elif opt in ("-s", "--sta"):
             arg_sta = arg
+        elif opt in ("-e", "--era"):
+            arg_era = arg
 
-    pre_proc(arg_file,arg_CAPE,arg_Tempo,arg_Vento,arg_min,arg_max,arg_sta)
+    pre_proc(arg_file,arg_CAPE,arg_Tempo,arg_Vento,arg_min,arg_max,arg_sta,arg_era)
 
 
 if __name__ == "__main__":

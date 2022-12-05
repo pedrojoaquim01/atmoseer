@@ -27,7 +27,8 @@ logging.basicConfig(filename='../log/log.txt',
                     datefmt='%H:%M:%S',
                     level=logging.INFO)
 
-def precisao_categoria (a,b):  
+def precisao_categoria (a,b): 
+
   a0 = []
   a1 = []
   a2 = []
