@@ -4,6 +4,7 @@ from pathlib import Path
 from math import cos, asin, sqrt
 import sys
 import getopt
+import xarray as xr
 
 
 def myFunc2(e):
@@ -67,8 +68,26 @@ def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_ma
         cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
         
         if(log_era):
-            df_era = pd.read_csv('../data/Forte_Cop_ERA5.csv')
-            del df_era['Unnamed: 0']
+            ano = list(map(str,range(1998,2022)))           
+            ds = xr.open_dataset('../data/ERA-5/RJ_1997.nc')
+            for i in ano:
+                ds_aux = xr.open_dataset('../data/ERA-5/RJ_'+ i +'.nc')
+                ds = ds.merge(ds_aux) 
+            
+            ano2 = [['1997','1998'],['1999','2000'],['2001','2002'],['2003','2004'],['2005','2006'],['2007','2008'],['2009','2010'],['2011','2012'],['2013','2014'],['2015','2016'],['2017','2018'],['2019','2020']]
+            ds2 = xr.open_dataset('../data/ERA-5/RJ_2021_200.nc')
+            for i in ano2:
+                ds_aux2 = xr.open_dataset('../data/ERA-5/RJ_'+ i[0]+'_'+i[1] +'_200.nc')
+                ds2 = ds2.merge(ds_aux2)
+
+            latitude_aux = df['VL_LATITUDE'][0]
+            longitude_aux = df['VL_LONGITUDE'][0]
+
+            test = ds.sel(level = 1000, longitude = longitude_aux, latitude = latitude_aux, method = 'nearest')
+            test2 = ds.sel(level = 700, longitude = longitude_aux, latitude = latitude_aux, method = 'nearest')
+            test3 = ds2.sel(longitude = longitude_aux, latitude = latitude_aux, method = 'nearest')
+            
+            df_era = pd.DataFrame({'time': test.time,'Geopotential_1000': test.z, 'Humidity_1000': test.r,'Temperature_1000': test.t, 'WindU_1000': test.u, 'WindV_1000': test.v,'Geopotential_700': test2.z, 'Humidity_700': test2.r,'Temperature_700': test2.t, 'WindU_700': test2.u, 'WindV_700': test2.v,'Geopotential_200': test3.z, 'Humidity_200': test3.r,'Temperature_200': test3.t, 'WindU_200': test3.u, 'WindV_200': test3.v})
             
             if arquivo in cor_est:
                 df['time'] = pd.to_datetime(df['Dia'] +' '+ df['Hora'], format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)

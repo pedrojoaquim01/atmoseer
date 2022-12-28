@@ -160,6 +160,7 @@ class Net(nn.Module):
         
         self.fc1 = nn.Linear(320,50)
         self.fc2 = nn.Linear(50,1)
+        self.relu = nn.ReLU()
 
     def forward(self,x):
         x = self.conv1d(x)
@@ -170,6 +171,7 @@ class Net(nn.Module):
         x = self.fc1(x)
         x = self.relu(x)
         x = self.fc2(x)
+        
         return x
 '''
 class Net(nn.Module):
@@ -304,23 +306,32 @@ def model(arquivo):
     print(df1.info())
     d_max = df1.max()
     d_min = df1.min()
-    df_norm=(df1-df1.min())/(df1.max()-df1.min())
-    df_norm=df_norm.dropna(how='all', axis=1)
+    #df_norm=(df1-df1.min())/(df1.max()-df1.min())
+    #df_norm=df_norm.dropna(how='all', axis=1)
 
     # Separação dos Dados
-    n = len(df_norm)
-    train_df = df_norm[0:int(n*0.7)]
-    val_df = df_norm[int(n*0.7):int(n*0.9)]
-    test_df = df_norm[int(n*0.9):]
+    n = len(df1)
+    train_df = df1[0:int(n*0.7)]
+    val_df = df1[int(n*0.7):int(n*0.9)]
+    test_df = df1[int(n*0.9):]
 
-    num_features = df_norm.shape[1]
+    train_df=(train_df-train_df.min())/(train_df.max()-train_df.min())
+    train_df=train_df.dropna(how='all', axis=1)
+
+    val_df=(val_df-val_df.min())/(val_df.max()-val_df.min())
+    val_df=val_df.dropna(how='all', axis=1)
+
+    test_df=(test_df-test_df.min())/(test_df.max()-test_df.min())
+    test_df=test_df.dropna(how='all', axis=1)
+
+    num_features = df1.shape[1]
 
     # Janelamento
     train_arr = np.array(train_df)
     val_arr = np.array(val_df)
     test_arr = np.array(test_df)
 
-    print(train_df.info())
+    print(train_df)
 
     if arquivo in cor_est:
         id_chuva = train_df.columns.get_loc("Chuva")
