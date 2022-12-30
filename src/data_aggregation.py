@@ -71,6 +71,12 @@ def aggregation(f, n, inic, fim):
     df['data'] = pd.to_datetime(df['DT_MEDICAO'] + ' '+ df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
     del df['Unnamed: 0']    
     df_aux = df
+    if inic != 0 and fim != 0:    
+        mask = (df['data'] > inic + '-1-1') & (df['data'] <= fim + '-1-1')
+        df_aux = df.loc[mask].reset_index(drop=True)
+    else:
+        df_aux = df.reset_index(drop=True)
+
     result = prox('RIO DE JANEIRO - FORTE DE COPACABANA_1997_2022',int(n))
     count = 0
     for s in result:
@@ -79,55 +85,64 @@ def aggregation(f, n, inic, fim):
         #df1 = df1.fillna(0)
         del df1['Unnamed: 0']
         
-        #if s in cor_est:
-        #    df1['data'] = pd.to_datetime(df1['Dia'] +' '+ df1['Hora'], format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
-        #else:
-        #    df1['data'] = pd.to_datetime(df1['DT_MEDICAO'] + ' '+ df1['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df1['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
+        if s in cor_est:
+            df1['data'] = pd.to_datetime(df1['Dia'] +' '+ df1['Hora'], format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
+        else:
+            df1['data'] = pd.to_datetime(df1['DT_MEDICAO'] + ' '+ df1['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df1['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
         
+        if inic != 0 and fim != 0:    
+            mask = (df1['data'] > inic + '-1-1') & (df1['data'] <= fim + '-1-1')
+            df1 = df1.loc[mask].reset_index(drop=True)
+        
+
         suf = str(count)
         count += 1
 
         if s in cor_est:
-            df1 = df1.drop(columns=['Dia','Hora','estacao','HBV'])
+            df1 = df1.drop(columns=['Dia','Hora','estacao','HBV','data'])
         else:
-            df1 = df1.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO'])
+            df1 = df1.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO','data'])
 
-        df_arr = np.array(df1)
+        if not df1.empty:
+            df_arr = np.array(df1)
 
-        WS = 2 # size of window to use
-        IDX_TARGET = 1 # index position of the target variable
-        if s in cor_est:
-            IDX_TARGET = df1.columns.get_loc("Chuva")
-        else:
-            IDX_TARGET = df1.columns.get_loc("CHUVA")
+            WS = 2 # size of window to use
+            IDX_TARGET = 1 # index position of the target variable
+            if s in cor_est:
+                IDX_TARGET = df1.columns.get_loc("Chuva")
+            else:
+                IDX_TARGET = df1.columns.get_loc("CHUVA")
 
-        X, y = apply_windowing(df_arr, 
-                                  initial_time_step=0, 
-                                  max_time_step=len(df_arr)-WS-1, 
-                                  window_size = WS, 
-                                  idx_target = IDX_TARGET,
-                                  only_y_not_nan = True,
-                                  only_y_gt_zero = True,
-                                  only_X_not_nan = True)
-        print(s)
-        print(X)
-        print(y)
 
-        if len(X) > 0:
-            df_aux['X_' + suf] =  pd.Series(X.tolist())
-            df_aux['y_' + suf] =  pd.Series(y.tolist())
+            X, y = apply_windowing(df_arr, 
+                                    initial_time_step=0, 
+                                    max_time_step=len(df_arr)-WS-1, 
+                                    window_size = WS, 
+                                    idx_target = IDX_TARGET,
+                                    only_y_not_nan = True,
+                                    only_y_gt_zero = True,
+                                    only_X_not_nan = True)
+            print(s)
+            print(X)
+            print(y)
 
-        #df1 = df1.add_suffix('_' + suf)
-        #df1 = df1.rename(columns={"data_" + suf : "data"})
-        
-       # df_aux = pd.merge(df_aux,df1, how = 'outer')
-        
-        #df_aux = df_aux.sort_values(by=['DT_MEDICAO','HR_MEDICAO'])
+            if len(X) > 0:
+                df_aux['X_' + suf] =  pd.Series(X.tolist())
+                df_aux['y_' + suf] =  pd.Series(y.tolist())
+
+            #df1 = df1.add_suffix('_' + suf)
+            #df1 = df1.rename(columns={"data_" + suf : "data"})
+            
+        # df_aux = pd.merge(df_aux,df1, how = 'outer')
+            
+            #df_aux = df_aux.sort_values(by=['DT_MEDICAO','HR_MEDICAO'])
 
     if inic == 0 and fim == 0:
         df_final = df_aux[df_aux['data'].isin(df['data'])]
+    else:
+        df_final = df_aux
 
-    print(df_final)
+    print(df_final.head())
     del df_final['data']
     df_final.to_csv('../data/'+ f + '_' + str(count) + '.csv')    
 
