@@ -106,7 +106,7 @@ def aggregation(f, n, inic, fim):
         if not df1.empty:
             df_arr = np.array(df1)
 
-            WS = 2 # size of window to use
+            WS = 4 # size of window to use
             IDX_TARGET = 1 # index position of the target variable
             if s in cor_est:
                 IDX_TARGET = df1.columns.get_loc("Chuva")
@@ -129,6 +129,10 @@ def aggregation(f, n, inic, fim):
             if len(X) > 0:
                 df_aux['X_' + suf] =  pd.Series(X.tolist())
                 df_aux['y_' + suf] =  pd.Series(y.tolist())
+                df_out= pd.DataFrame()
+                df_out['X'] =  pd.Series(X.tolist())
+                df_out['y'] =  pd.Series(y.tolist())
+                df_out.to_csv('../data/Forte_Copacabana - ' + s + '.csv')   
 
             #df1 = df1.add_suffix('_' + suf)
             #df1 = df1.rename(columns={"data_" + suf : "data"})
