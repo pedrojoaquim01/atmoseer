@@ -4,7 +4,7 @@ import sys, getopt, os, re
 from datetime import datetime
 from math import cos, asin, sqrt
 import numpy as np
-
+import pickle
 
 def apply_windowing(X, 
                     initial_time_step, 
@@ -80,7 +80,11 @@ def aggregation(f, n, inic, fim):
     result = prox('RIO DE JANEIRO - FORTE DE COPACABANA_1997_2022',int(n))
     count = 0
     for s in result:
-        fonte = '../data/'+s+'.csv'
+        
+        if s in cor_est:
+            fonte = '../data/'+s+'.csv'
+        else:
+            fonte = '../data/'+s+'_ERA5_RAD_VENT_TEMP.csv'
         df1 = pd.read_csv(fonte)
         #df1 = df1.fillna(0)
         del df1['Unnamed: 0']
@@ -97,16 +101,16 @@ def aggregation(f, n, inic, fim):
 
         suf = str(count)
         count += 1
-
+        
         if s in cor_est:
             df1 = df1.drop(columns=['Dia','Hora','estacao','HBV','data'])
         else:
-            df1 = df1.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO','data'])
+            df1 = df1.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO','data','showalter'])
 
         if not df1.empty:
             df_arr = np.array(df1)
 
-            WS = 4 # size of window to use
+            WS = 6 # size of window to use
             IDX_TARGET = 1 # index position of the target variable
             if s in cor_est:
                 IDX_TARGET = df1.columns.get_loc("Chuva")
@@ -129,10 +133,20 @@ def aggregation(f, n, inic, fim):
             if len(X) > 0:
                 df_aux['X_' + suf] =  pd.Series(X.tolist())
                 df_aux['y_' + suf] =  pd.Series(y.tolist())
-                df_out= pd.DataFrame()
-                df_out['X'] =  pd.Series(X.tolist())
-                df_out['y'] =  pd.Series(y.tolist())
-                df_out.to_csv('../data/Forte_Copacabana - ' + s + '.csv')   
+                #df_out= pd.DataFrame()
+                outfile = open('../data/Janelamento_'+ s+'_X','wb')
+                pickle.dump(X,outfile)
+                
+                
+                outfile = open('../data/Janelamento_'+ s+'_y','wb')
+                pickle.dump(y,outfile)
+
+                infile = open('../data/Janelamento_'+ s+'_X','rb')
+                #df_out['X'] =  pd.Series(X.tolist())
+                #df_out['y'] =  pd.Series(y.tolist())
+                #df_out.to_csv('../data/Forte_Copacabana - ' + s + '.csv')
+                new_dict = pickle.load(infile)
+                print(new_dict)
 
             #df1 = df1.add_suffix('_' + suf)
             #df1 = df1.rename(columns={"data_" + suf : "data"})
