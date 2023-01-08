@@ -80,8 +80,11 @@ def pre_proc(arquivo,log_CAPE = 0,log_Vento = 0,log_Tempo = 0,mes_min = 0,mes_ma
                 ds_aux2 = xr.open_dataset('../data/ERA-5/RJ_'+ i[0]+'_'+i[1] +'_200.nc')
                 ds2 = ds2.merge(ds_aux2)
 
-            latitude_aux = df['VL_LATITUDE'][0]
-            longitude_aux = df['VL_LONGITUDE'][0]
+            df_estacoes = pd.read_csv('../data/estacoes_local.csv')
+            df_estacoes = df_estacoes[df_estacoes['files'] == arquivo]
+            latitude_aux = df_estacoes['VL_LATITUDE'].iloc[0]
+            
+            longitude_aux = df_estacoes['VL_LONGITUDE'].iloc[0]
 
             test = ds.sel(level = 1000, longitude = longitude_aux, latitude = latitude_aux, method = 'nearest')
             test2 = ds.sel(level = 700, longitude = longitude_aux, latitude = latitude_aux, method = 'nearest')
