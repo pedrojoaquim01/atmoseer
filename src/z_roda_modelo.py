@@ -187,6 +187,11 @@ class NetRegression(nn.Module):
       y_pred = y_pred.cpu().numpy().reshape(-1,1)
       test_error = skl.mean_squared_error(y_test, y_pred)
       print('MSE on the entire test set: %f' % test_error)
+      test_error2 = skl.mean_absolute_error(y_test, y_pred)
+      print('MAE on the entire test set: %f' % test_error2)
+      test_error3 = mean_bias_error(y_test, y_pred)
+      print('MBE on the entire test set: %f' % test_error3)
+
 
       export_results_to_latex(y_test, y_pred)
 
@@ -763,6 +768,9 @@ def export_confusion_matrix_to_latex(y_true, y_pred):
   y_true_class[extreme_rain_true] = EXTREME_RAIN
   y_pred_class[extreme_rain_pred] = EXTREME_RAIN
   
+  
+  print('Resultado classification_report : ')
+  print(skl.classification_report(y_true_class, y_pred_class))
   # target_names = ['No Rain', 'Weak Rain', 'Moderate Rain', 'Strong Rain']
   df = pd.DataFrame(
       confusion_matrix(y_true_class, y_pred_class, labels=[0,1,2,3,4]), 
