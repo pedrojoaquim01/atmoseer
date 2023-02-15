@@ -65,7 +65,7 @@ def processamento():
             
             try:
                 showalter = mpcalc.showalter_index(df_aux['pressure'].to_numpy() * units.hPa , df_aux['temperature'].to_numpy() * units.degC, df_aux['dewpoint'].to_numpy() * units.degC)
-                df.loc[df_s['time'] == tempo,'showalter'] = showalter.magnitude
+                df.loc[df_s['time'] == tempo,'showalter'] = showalter.magnitude[0]
             except:
                 df.loc[df_s['time'] == tempo,'showalter'] = 0
 
