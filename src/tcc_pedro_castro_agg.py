@@ -116,7 +116,7 @@ def main(ordinal_regression = True, file = '', sta = 0):
     
 
   if arquivo in cor_est:
-    df1 = df.drop(columns=['Unnamed: 0', 'Dia','Hora','estacao','HBV', 'showalter'])
+    df1 = df.drop(columns=['Unnamed: 0', 'Dia','Hora','estacao','HBV'])
     col_target = 'Chuva'
   else:
     df1 = df.drop(columns=['Unnamed: 0', 'DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO'])

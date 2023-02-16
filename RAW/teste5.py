@@ -8,14 +8,15 @@ from metpy.units import units
 import metpy.calc as mpcalc
 
 def processamento():
-    df_s = pd.read_csv('sondas_CAPE_CIN.csv')
+    df_s = pd.read_csv('../data/sondas.csv')
     
 
     for tempo in df_s.time.unique():
         df_aux = df_s[df_s['time'] == tempo]
         
     
-    
+    df_s['CAPE'] = 0.0
+    df_s['CIN'] = 0.0
     df_s['lift_index'] = 0.0
     df_s['k_index'] = 0.0
     df_s['total_totals'] = 0.0
@@ -33,6 +34,15 @@ def processamento():
 
     for tempo in df_s.time.unique():
             df_aux = df_s[df_s['time'] == tempo]
+
+            try:
+                CAPE = mpcalc.surface_based_cape_cin(df_aux['pressure'].to_numpy() * units.hPa , df_aux['temperature'].to_numpy() * units.degC, df_aux['dewpoint'].to_numpy() * units.degC)
+                df_s.loc[df_s['time'] == tempo,'CAPE'] = CAPE[0].astype(float)
+                df_s.loc[df_s['time'] == tempo,'CIN'] = CAPE[1].astype(float)
+            except:
+                CAPE = [0,0]
+                df_s.loc[df_s['time'] == tempo,'CAPE'] = CAPE[0]
+                df_s.loc[df_s['time'] == tempo,'CIN'] = CAPE[1]
 
             try:
                 k_index = mpcalc.k_index(df_aux['pressure'].to_numpy() * units.hPa , df_aux['temperature'].to_numpy() * units.degC, df_aux['dewpoint'].to_numpy() * units.degC)
@@ -62,7 +72,7 @@ def processamento():
             except:
                 df_s.loc[df_s['time'] == tempo,'lift_index'] = 0
 
-    df_s.to_csv('teste_sondas.csv',index=False)
+    df_s.to_csv('sondas_completo.csv',index=False)
 
 if __name__ == "__main__":
     processamento()

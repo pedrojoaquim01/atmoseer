@@ -1,0 +1,7 @@
+Relatório Meteorológico da Estação: Alto da Boa Vista 
+ 
+Dados normalizados para o Horário Brasileiro de Verão (HBV) 
+ 
+Dia Hora HBV Chuva DirVento VelVento Temperatura Pressao Umidade 
+ (graus) (m/s) (celsius) (hPa) (%) 
+01/04/2003 00:00:00 HBV ND ND ND ND ND ND

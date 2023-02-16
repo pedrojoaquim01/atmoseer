@@ -1,0 +1,7 @@
+Relatório Meteorológico da Estação: São Cristóvão 
+ 
+Dados normalizados para o Horário Brasileiro de Verão (HBV) 
+ 
+Dia Hora HBV Chuva DirVento VelVento Temperatura Pressao Umidade 
+ (graus) (m/s) (celsius) (hPa) (%) 
+01/07/2000 00:00:00 HBV ND ND ND ND ND ND

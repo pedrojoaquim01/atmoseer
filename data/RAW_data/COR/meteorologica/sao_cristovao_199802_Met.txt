@@ -1,0 +1,6 @@
+Relatório Meteorológico da Estação: Sao Cristovao
+
+Dados normalizados para o Horário Brasileiro de Verão (HBV)
+
+Dia         Hora      HBV   Chuva  DirVento  VelVento  Temperatura  Pressao  Umidade
+                                     (graus)     (m/s)    (celsius)    (hPa)      (%)
