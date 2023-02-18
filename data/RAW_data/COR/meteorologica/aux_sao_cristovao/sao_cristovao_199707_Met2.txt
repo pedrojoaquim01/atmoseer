@@ -4,4 +4,4 @@ Dados normalizados para o Horário Brasileiro de Verão (HBV)
  
 Dia Hora HBV Chuva DirVento VelVento Temperatura Pressao Umidade 
  (graus) (m/s) (celsius) (hPa) (%) 
-01/07/1997 00:00:00 HBV ND ND ND ND ND ND
+01/07/1997 00:00:00 nHBV ND ND ND ND ND ND

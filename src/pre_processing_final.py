@@ -5,18 +5,23 @@ from math import cos, asin, sqrt
 import sys
 import getopt
 import xarray as xr
+from Utils.near_stations import prox
 
-def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1):
+def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta = 0):
 
     arq_pre_proc = arquivo
     if(log_era):
-        arq_pre_proc = arq_pre_proc + '_ERA5'
+        arq_pre_proc = arq_pre_proc + '_N'
     if(log_CAPE):
-        arq_pre_proc = arq_pre_proc + '_RAD'
-    if(log_Vento):
-        arq_pre_proc = arq_pre_proc + '_VENT'
-    if(log_Tempo):
-        arq_pre_proc = arq_pre_proc + '_TEMP'
+        arq_pre_proc = arq_pre_proc + '_R'
+    if(sta > 0):
+        arq_pre_proc = arq_pre_proc + '_EI+' + str(sta) + 'NN'
+    else:
+        arq_pre_proc = arq_pre_proc + '_EI'
+    #if(log_Vento):
+    #    arq_pre_proc = arq_pre_proc + '_VENT'
+    #if(log_Tempo):
+    #    arq_pre_proc = arq_pre_proc + '_TEMP'
 
     dado_proc = Path('../data/'+arq_pre_proc+'.csv')
 
@@ -34,7 +39,7 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1):
         df = df.fillna(0)
         df = df.reindex(sorted(df.columns), axis=1)
         
-        print('Log: Importou sem problema')
+        #print('Log: Importou sem problema')
 
         cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
         
@@ -135,7 +140,7 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1):
                 df['Wx'] = wv*np.cos(wd_rad)
                 df['Wy'] = wv*np.sin(wd_rad)
         
-            print('Log: Variavel Vento sem problema')
+            #print('Log: Variavel Vento sem problema')
         
         if(log_Tempo):
             if arquivo in cor_est:
@@ -152,22 +157,128 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1):
             df['Year sin'] = np.sin(timestamp_s * (2 * np.pi / year))
             df['Year cos'] = np.cos(timestamp_s * (2 * np.pi / year))
             
-            print('Log: Variavel Tempo sem problema')
-
+            #print('Log: Variavel Tempo sem problema')
         
-        df.to_csv('../data/'+arq_pre_proc + '.csv')    
-        return df
+        # AGREGAÇÃO E SEPARAÇÃO DOS DADOS
+        cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
+        df = df.fillna(0)
 
+        if arquivo in cor_est:
+            if sta != 0:
+                data_aux = pd.to_datetime(df['DT_MEDICAO'] + ' '+ df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
+        else:    
+            if sta != 0:
+                data_aux = pd.to_datetime(df['Dia'] + ' '+ df['Hora'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df['Hora'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
+        
+        if arquivo in cor_est:
+            df1 = df.drop(columns=['Unnamed: 0', 'Dia','Hora','estacao','HBV'])
+            col_target = 'Chuva'
+        else:
+            df1 = df.drop(columns=['Unnamed: 0', 'DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO'])
+            col_target = 'CHUVA'
+
+
+        assert df1.isnull().values.any() == False
+
+        target = df1[col_target].copy()
+
+        df2 = ((df1-df1.min())/(df1.max()-df1.min()))
+
+        df2[col_target] = target
+
+        df2 = df2.fillna(0)
+        
+        if sta != 0:
+            df2['data'] = data_aux
+
+        assert df2.isnull().values.any() == False
+
+        n = len(df2)
+        train_df = df2[0:int(n*0.7)]
+        val_df = df2[int(n*0.7):int(n*0.9)]
+        test_df = df2[int(n*0.9):]
+
+        if sta != 0:
+            if s not in cor_est:
+                df2 = df2.drop(columns=['TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
+                train_df = train_df.drop(columns=['TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
+                val_df = val_df.drop(columns=['TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
+                test_df = test_df.drop(columns=['TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
+                
+            result = prox(arquivo,int(sta))
+            count = 0
+            for s in result:
+                fonte = '../data/'+ s +'.csv'
+                df3 = pd.read_csv(fonte)
+                df3 = df1.fillna(0)
+                del df3['Unnamed: 0']
+                
+                if s in cor_est:
+                    df3['data'] = pd.to_datetime(df3['Dia'] +' '+ df3['Hora'], format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
+                else:
+                    df3['data'] = pd.to_datetime(df3['DT_MEDICAO'] + ' '+ df3['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df3['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
+
+                suf = str(count)
+                count += 1
+                
+                #df1 = df1[df1['data'].isin(df['data'])]
+                
+                try:
+                    train_df3 = df3[df3['data'].isin(train_df['data'])]
+                except:
+                    continue
+                val_df3 = df3[df3['data'].isin(val_df['data'])]
+                test_df3 =  df3[df3['data'].isin(test_df['data'])]
+
+                if s in cor_est:
+                    df3['CHUVA'] = df3['Chuva']
+                    df3['VEN_DIR'] = df3['DirVento']
+                    df3['VEN_VEL'] = df3['VelVento']
+                    df3['TEM_INS'] = df3['Temperatura']
+                    df3['PRE_INS'] = df3['Pressao']
+                    df3['UMD_INS'] = df3['Umidade']
+
+                    df3 = df3.drop(columns=['Dia','Hora','estacao','HBV','Chuva','DirVento','VelVento','Temperatura','Pressao','Umidade'])
+                    
+                    train_df3 = train_df3.drop(columns=['Dia','Hora','estacao','HBV','Chuva','DirVento','VelVento','Temperatura','Pressao','Umidade'])
+                    val_df3 = val_df3.drop(columns=['Dia','Hora','estacao','HBV','Chuva','DirVento','VelVento','Temperatura','Pressao','Umidade'])
+                    test_df3 =  test_df3.drop(columns=['Dia','Hora','estacao','HBV','Chuva','DirVento','VelVento','Temperatura','Pressao','Umidade'])
+
+                else:
+                    df1 = df1.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO','TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
+            
+                    train_df3 = train_df3.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO','TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
+                    val_df3 = val_df3.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO','TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
+                    test_df3 =  test_df3.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO','TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
+                
+                train_df = pd.concat([train_df,train_df3], ignore_index=True)
+                train_df.sort_values(by='data', inplace = True)
+                train_df = train_df.fillna(0)
+                val_df = pd.concat([val_df,val_df3], ignore_index=True)
+                val_df.sort_values(by='data', inplace = True)
+                val_df = val_df.fillna(0)
+                
+        
+        if sta != 0:
+            train_df = train_df.drop(columns=['data'])
+            val_df = val_df.drop(columns=['data'])
+            test_df = test_df.drop(columns=['data'])
+
+        #Exportação
+        train_df.to_csv('../data/'+arq_pre_proc +'_train.csv')  
+        val_df.to_csv('../data/'+arq_pre_proc +'_val.csv')  
+        test_df.to_csv('../data/'+arq_pre_proc +'_test.csv')    
+        print('Para o script de treinamento do modelo utilize arquivo : ' + arq_pre_proc)
 
 def myfunc(argv):
     arg_file = ""
     arg_CAPE = 0
     arg_era = 0
+    sta = 0
     arg_help = "{0} -f <file> -d <data_type>".format(argv[0])
     
     try:
-        opts, args = getopt.getopt(argv[1:], "hf:d:", ["help", "file=", 
-        "data="])
+        opts, args = getopt.getopt(argv[1:], "hf:d:s:", ["help", "file=", "data=", "sta="])
     except:
         print(arg_help)
         sys.exit(2)
@@ -183,8 +294,10 @@ def myfunc(argv):
                 arg_CAPE = 1
             if arg.find('N') != -1:
                 arg_era = 1
+        elif opt in ("-s", "--sta"):
+            sta = arg
 
-    pre_proc(arg_file,arg_CAPE,arg_era)
+    pre_proc(arg_file,arg_CAPE,arg_era,sta)
 
 
 if __name__ == "__main__":

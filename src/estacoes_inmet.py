@@ -26,7 +26,7 @@ def processamento(estacao, all = 0,arg_begin = 1997,arg_end = 2022):
                                     '-01-01/' + str(i+1) + '-01-01/' + estacoes['CD_ESTACAO'].iloc[j])
                 uniao = [dfnew2, novo]
                 dfnew2 = pd.concat(uniao)
-            dfnew2.to_csv(estacoes['DC_NOME'].iloc[j] + '_'+ str(arg_begin) +'_'+ str(arg_end) +'.csv')
+            dfnew2.to_csv(estacoes['DC_NOME'].iloc[j] + '.csv')
 
 
 def myfunc(argv):

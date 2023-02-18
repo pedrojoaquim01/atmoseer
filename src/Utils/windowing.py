@@ -39,83 +39,17 @@ def apply_windowing(X,
 
   return X_temp, y_temp
 
-def generate_windowed_split(df, id_target = 'CHUVA', window_size = 6, stations = 0, aux_nome = ''):
-  n = len(df)
-  train_df = df[0:int(n*0.7)]
-  val_df = df[int(n*0.7):int(n*0.9)]
-  test_df = df[int(n*0.9):]
-
-  if stations != 0:
-    df = df.drop(columns=['TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
-    train_df = train_df.drop(columns=['TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
-    val_df = val_df.drop(columns=['TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
-    test_df = test_df.drop(columns=['TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
-    
-    result = prox('RIO DE JANEIRO - FORTE DE COPACABANA_1997_2022',int(stations))
-    count = 0
-    sufix = aux_nome.replace('RIO DE JANEIRO - FORTE DE COPACABANA_1997_2022','')
-    for s in result:
-        
-        if s in cor_est:
-            fonte = '../data/'+ s + sufix +'.csv'
-        else:
-            fonte = '../data/'+ s + sufix +'.csv'
-        df1 = pd.read_csv(fonte)
-        df1 = df1.fillna(0)
-        del df1['Unnamed: 0']
-        
-        if s in cor_est:
-            df1['data'] = pd.to_datetime(df1['Dia'] +' '+ df1['Hora'], format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
-        else:
-            df1['data'] = pd.to_datetime(df1['DT_MEDICAO'] + ' '+ df1['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df1['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
-
-        suf = str(count)
-        count += 1
-        
-        #df1 = df1[df1['data'].isin(df['data'])]
-        
-        print(df1)
-        try:
-          train_df1 = df1[df1['data'].isin(train_df['data'])]
-        except:
-          continue
-        val_df1 = df1[df1['data'].isin(val_df['data'])]
-        test_df1 =  df1[df1['data'].isin(test_df['data'])]
-
-        print(df1)
-        if s in cor_est:
-            df1['CHUVA'] = df1['Chuva']
-            df1['VEN_DIR'] = df1['DirVento']
-            df1['VEN_VEL'] = df1['VelVento']
-            df1['TEM_INS'] = df1['Temperatura']
-            df1['PRE_INS'] = df1['Pressao']
-            df1['UMD_INS'] = df1['Umidade']
-
-            df1 = df1.drop(columns=['Dia','Hora','estacao','HBV','Chuva','DirVento','VelVento','Temperatura','Pressao','Umidade'])
-            
-            train_df1 = train_df1.drop(columns=['Dia','Hora','estacao','HBV','Chuva','DirVento','VelVento','Temperatura','Pressao','Umidade'])
-            val_df1 = val_df1.drop(columns=['Dia','Hora','estacao','HBV','Chuva','DirVento','VelVento','Temperatura','Pressao','Umidade'])
-            test_df1 =  test_df1.drop(columns=['Dia','Hora','estacao','HBV','Chuva','DirVento','VelVento','Temperatura','Pressao','Umidade'])
-
-        else:
-            df1 = df1.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO','TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
-    
-            train_df1 = train_df1.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO','TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
-            val_df1 = val_df1.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO','TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
-            test_df1 =  test_df1.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO','TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
-        
-        train_df = pd.concat([train_df,train_df1], ignore_index=True)
-        train_df.sort_values(by='data', inplace = True)
-        train_df = train_df.fillna(0)
-        val_df = pd.concat([val_df,val_df1], ignore_index=True)
-        val_df.sort_values(by='data', inplace = True)
-        val_df = val_df.fillna(0)
-        
+def generate_windowed_split(arquivo, id_target = 'CHUVA', window_size = 6, stations = 0, aux_nome = ''):
   
-  if stations != 0:
-    train_df = train_df.drop(columns=['data'])
-    val_df = val_df.drop(columns=['data'])
-    test_df = test_df.drop(columns=['data'])
+  train_df = pd.read_csv(arquivo + '_train.csv')
+  train_df = train_df.drop(column=['Unnamed: 0'])
+
+  val_df = pd.read_csv(arquivo + '_val.csv')
+  val_df = val_df.drop(column=['Unnamed: 0'])
+
+  test_df = pd.read_csv(arquivo + '_test.csv')
+  test_df = test_df.drop(column=['Unnamed: 0'])
+
   train_arr = np.array(train_df)
   val_arr = np.array(val_df)
   test_arr = np.array(test_df)

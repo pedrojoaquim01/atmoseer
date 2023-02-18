@@ -16,12 +16,12 @@ def corrige_txt(nom_estacao, ano, mes):
                 for line in fin:
                     count += 1
                     if nom_estacao == 'guaratiba':
-                        fout.write(re.sub('\s+', ' ', line.replace(':40      ', ':00  HBV')))
+                        fout.write(re.sub('\s+', ' ', line.replace(':40      ', ':00  nHBV')))
                     else:
-                        fout.write(re.sub('\s+', ' ', line.replace(':00      ', ':00  HBV')))
+                        fout.write(re.sub('\s+', ' ', line.replace(':00      ', ':00  nHBV')))
                     fout.write('\n')
                 if count == 6:
-                    fout.write('01/' + num2 + '/'+num1 + ' 00:00:00 HBV ND ND ND ND ND ND')
+                    fout.write('01/' + num2 + '/'+num1 + ' 00:00:00 nHBV ND ND ND ND ND ND')
                 fin.close()
                 fout.close()
             else:
@@ -90,6 +90,11 @@ def gera_dataset(nom_estacao, ano, mes, arg_end):
         mes1 = [str(i).rjust(2, '0') for i in mes1]
     data1 = data1.replace('ND', np.NaN)
     data1 = data1.replace('-', np.NaN)
+    data1 = data1[data1['Hora'].str[2:6] == ':00:']
+    data1['Hora'] = np.where(data1['HBV'] == 'HBV', data1['Hora'].str[0:2].astype(int) - 1, data1['Hora'].str[0:2].astype(int))
+    data1['Hora'] = np.where(data1['Hora'] == -1, 23, data1['Hora'])
+    data1['Hora'] = data1['Hora'].astype(str).str.zfill(2) + ':00:00'
+
     data1['estacao'] = nom_estacao
     data1.to_csv('../data/'+ nom_estacao + '.csv')
     data_aux = data1

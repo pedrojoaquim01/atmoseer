@@ -102,43 +102,20 @@ def train(X_train, y_train, X_val, y_val, ordinal_regression):
 
   return model
 
-def main(ordinal_regression = True, file = '', sta = 0):
+def main(ordinal_regression = True, file = ''):
   seed_everything()
 
-  arquivo = '../data/' + file + '.csv'
+  arquivo = '../data/' + file
 
   cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
-  df = pd.read_csv(arquivo)
-  df = df.fillna(0)
-
-  if sta != 0:
-    data_aux = pd.to_datetime(df['DT_MEDICAO'] + ' '+ df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
-    
-
-  if arquivo in cor_est:
-    df1 = df.drop(columns=['Unnamed: 0', 'Dia','Hora','estacao','HBV'])
-    col_target = 'Chuva'
-  else:
-    df1 = df.drop(columns=['Unnamed: 0', 'DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO'])
-    col_target = 'CHUVA'
-
-
-  assert df1.isnull().values.any() == False
-
-  target = df1[col_target].copy()
-
-  df2 = ((df1-df1.min())/(df1.max()-df1.min()))
-
-  df2[col_target] = target
-
-  df2 = df2.fillna(0)
   
-  if sta != 0:
-    df2['data'] = data_aux
+  for s in cor_est:
+    if s in file:
+      col_target = 'Chuva'
+    else:
+      col_target = 'CHUVA'
 
-  assert df2.isnull().values.any() == False
-
-  X_train, y_train, X_val, y_val, X_test, y_test = generate_windowed_split(df2, id_target = col_target, window_size = 6, stations = sta, )
+  X_train, y_train, X_val, y_val, X_test, y_test = generate_windowed_split(arquivo, id_target = col_target, window_size = 6, stations = sta, )
 
   print('***Before subsampling***')
   print('Max precipitation values (train/val/test): %d, %d, %d' % (np.max(y_train), np.max(y_val), np.max(y_test)))
@@ -164,11 +141,11 @@ def main(ordinal_regression = True, file = '', sta = 0):
 
 def myfunc(argv):
     arg_file = ""
-    arg_sta = 0
+    arg_model = True
     arg_help = "{0} -f <file> -s <sta>".format(argv[0])
     
     try:
-        opts, args = getopt.getopt(argv[1:], "hf:s:", ["help", "file=","sta="])
+        opts, args = getopt.getopt(argv[1:], "hf:r:", ["help", "file=","reg="])
     except:
         print(arg_help)
         sys.exit(2)
@@ -179,8 +156,8 @@ def myfunc(argv):
             sys.exit(2)
         elif opt in ("-f", "--file"):
             arg_file = arg
-        elif opt in ("-s", "--sta"):
-            arg_sta = arg
+        elif opt in ("-r", "--reg"):
+            arg_model = False
 
         
     global aux_nome
@@ -188,9 +165,9 @@ def myfunc(argv):
     aux_nome = ''
     num_sta = ''
     aux_nome = arg_file
-    num_sta = str(arg_sta)
+    num_sta = str(arg_model)
     start_time = time.time()
-    main(ordinal_regression = False, file = arg_file, sta = arg_sta)
+    main(ordinal_regression = arg_model, file = arg_file)
     print("--- %s seconds ---" % (time.time() - start_time))
 
 
