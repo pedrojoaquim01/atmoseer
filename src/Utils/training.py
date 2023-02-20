@@ -205,4 +205,4 @@ def gen_learning_curve(train_loss, val_loss,aux_nome,num_sta):
   plt.grid(True)
   plt.legend()
   plt.tight_layout()
-  fig.savefig('loss_plot_' + aux_nome +'_'+ num_sta +  '.png', bbox_inches='tight')
+  fig.savefig('..img/loss_plot_' + aux_nome +'_'+ num_sta +  '.png', bbox_inches='tight')

@@ -1,5 +1,5 @@
 import logging, argparse, time
-import generate_model as gm
+import train_model as gm
 
 logging.basicConfig(filename='../log/log.txt',
                     filemode='a',

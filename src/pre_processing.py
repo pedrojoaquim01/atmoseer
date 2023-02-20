@@ -9,11 +9,11 @@ from Utils.near_stations import prox
 
 def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta = 0):
 
-    arq_pre_proc = arquivo
+    arq_pre_proc = arquivo + '_E'
     if(log_era):
-        arq_pre_proc = arq_pre_proc + '_N'
+        arq_pre_proc = arq_pre_proc + '-N'
     if(log_CAPE):
-        arq_pre_proc = arq_pre_proc + '_R'
+        arq_pre_proc = arq_pre_proc + '-R'
     if(sta > 0):
         arq_pre_proc = arq_pre_proc + '_EI+' + str(sta) + 'NN'
     else:
