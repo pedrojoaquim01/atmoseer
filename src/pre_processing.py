@@ -28,14 +28,16 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta 
     if dado_proc.is_file():
         fonte = '../data/'+arq_pre_proc+'.csv'
         df = pd.read_csv(fonte)
-        del df['Unnamed: 0']
+        if 'Unnamed: 0' in df.columns:
+            del df['Unnamed: 0']
         df = df.fillna(0)
         df = df.reindex(sorted(df.columns), axis=1)
         return df
     else:
         fonte = '../data/'+arquivo+'.csv'
         df = pd.read_csv(fonte)
-        del df['Unnamed: 0']
+        if 'Unnamed: 0' in df.columns:
+            del df['Unnamed: 0']
         df = df.fillna(0)
         df = df.reindex(sorted(df.columns), axis=1)
         
@@ -171,10 +173,10 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta 
                 data_aux = pd.to_datetime(df['Dia'] + ' '+ df['Hora'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df['Hora'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
         
         if arquivo in cor_est:
-            df1 = df.drop(columns=['Unnamed: 0', 'Dia','Hora','estacao','HBV'])
+            df1 = df.drop(columns=['Dia','Hora','estacao','HBV'])
             col_target = 'Chuva'
         else:
-            df1 = df.drop(columns=['Unnamed: 0', 'DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO'])
+            df1 = df.drop(columns=['DC_NOME','UF','DT_MEDICAO','CD_ESTACAO','VL_LATITUDE','VL_LONGITUDE','HR_MEDICAO'])
             col_target = 'CHUVA'
 
 

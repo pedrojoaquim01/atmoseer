@@ -39,16 +39,16 @@ def apply_windowing(X,
 
   return X_temp, y_temp
 
-def generate_windowed_split(arquivo, id_target = 'CHUVA', window_size = 6, stations = 0, aux_nome = ''):
+def generate_windowed_split(arquivo, id_target = 'CHUVA', window_size = 6):
   
   train_df = pd.read_csv(arquivo + '_train.csv')
-  train_df = train_df.drop(column=['Unnamed: 0'])
-
+  del train_df['Unnamed: 0']
+  
   val_df = pd.read_csv(arquivo + '_val.csv')
-  val_df = val_df.drop(column=['Unnamed: 0'])
+  del val_df['Unnamed: 0']
 
   test_df = pd.read_csv(arquivo + '_test.csv')
-  test_df = test_df.drop(column=['Unnamed: 0'])
+  del test_df['Unnamed: 0']
 
   train_arr = np.array(train_df)
   val_arr = np.array(val_df)

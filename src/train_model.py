@@ -104,10 +104,11 @@ def main(ordinal_regression = True, file = ''):
   for s in cor_est:
     if s in file:
       col_target = 'Chuva'
+      break
     else:
       col_target = 'CHUVA'
 
-  X_train, y_train, X_val, y_val, X_test, y_test = generate_windowed_split(arquivo, id_target = col_target, window_size = 6, stations = sta, )
+  X_train, y_train, X_val, y_val, X_test, y_test = generate_windowed_split(arquivo, id_target = col_target, window_size = 6)
 
   print('***Before subsampling***')
   print('Max precipitation values (train/val/test): %d, %d, %d' % (np.max(y_train), np.max(y_val), np.max(y_test)))
