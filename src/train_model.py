@@ -127,7 +127,7 @@ def main(ordinal_regression = True, file = ''):
   model = train(X_train, y_train, X_val, y_val, ordinal_regression)
   
   # load the best model
-  model.load_state_dict(torch.load('../model/Modelo_'+ aux_nome +'_'+ num_sta +'.pt'))
+  model.load_state_dict(torch.load('../model/Modelo_'+ aux_nome +'.pt'))
 
   model.evaluate(X_test, y_test)
 

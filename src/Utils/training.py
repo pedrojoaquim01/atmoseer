@@ -98,7 +98,7 @@ class EarlyStopping:
         '''Saves model when validation loss decrease.'''
         if self.verbose:
             print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
-        torch.save(model.state_dict(), 'Modelo_'+ aux_nome +'_'+ num_sta + '.pt')
+        torch.save(model.state_dict(), '../model/Modelo_'+ aux_nome +'.pt')
         self.val_loss_min = val_loss
 
 def fit(model, n_epochs, optimizer, train_loader, val_loader, patience, criterion,aux_nome,num_sta):    
@@ -205,4 +205,4 @@ def gen_learning_curve(train_loss, val_loss,aux_nome,num_sta):
   plt.grid(True)
   plt.legend()
   plt.tight_layout()
-  fig.savefig('..img/loss_plot_' + aux_nome +'_'+ num_sta +  '.png', bbox_inches='tight')
+  fig.savefig('../img/loss_plot_' + aux_nome +'.png', bbox_inches='tight')

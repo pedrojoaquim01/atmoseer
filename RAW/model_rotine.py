@@ -1,7 +1,7 @@
 import logging, argparse, time
 import train_model as gm
 
-logging.basicConfig(filename='../log/log.txt',
+logging.basicConfig(filename='../../log/log.txt',
                     filemode='a',
                     format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                     datefmt='%H:%M:%S',
