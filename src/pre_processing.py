@@ -6,6 +6,7 @@ import sys
 import getopt
 import xarray as xr
 from Utils.near_stations import prox
+from datetime import datetime, timedelta
 
 def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta = 0):
 
@@ -76,7 +77,8 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta 
                 df['time'] = pd.to_datetime(df['DT_MEDICAO'] + ' '+ df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
             
             df_era['time'] = pd.to_datetime(df_era['time'].astype(str))
-            
+            df_era['time'] = df_era['time'] - timedelta(hours=3)
+
             df = df.merge(df_era,on='time',how='left')
 
             df['Geopotential_1000'] = df['Geopotential_1000'].interpolate(method='linear')
@@ -115,7 +117,7 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta 
             df_rs_aux = df_rs[['time','CAPE','CIN','showalter','lift_index','k_index','total_totals']]
             df_rs_aux = df_rs_aux.drop_duplicates()
             df_rs_aux['time'] = pd.to_datetime(df_rs_aux['time'].astype(str))
-
+            df_rs_aux['time'] = df_rs_aux['time'] + timedelta(hours=4)
             df = df.merge(df_rs_aux,on='time',how='left')
             
             df['CAPE'] = df['CAPE'].interpolate(method='linear')
@@ -130,7 +132,7 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta 
 
         if(log_Vento):
             if arquivo in cor_est:
-                wv = df['VelVento']
+                wv = df['VelVento'] / 3.6
                 wd_rad = df['DirVento']*np.pi / 180
 
                 df['Wx'] = wv*np.cos(wd_rad)
@@ -235,7 +237,7 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta 
                 if s in cor_est:
                     df3['CHUVA'] = df3['Chuva']
                     df3['VEN_DIR'] = df3['DirVento']
-                    df3['VEN_VEL'] = df3['VelVento']
+                    df3['VEN_VEL'] = df3['VelVento'] / 3.6
                     df3['TEM_INS'] = df3['Temperatura']
                     df3['PRE_INS'] = df3['Pressao']
                     df3['UMD_INS'] = df3['Umidade']
