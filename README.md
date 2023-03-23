@@ -4,25 +4,35 @@
 
 This project provides a pipeline to build rainfall forecast models using 1D Convolutional Neural Networks. The pipeline can be configured with different meteorological data sources.
 
-## Application
+## Install
 
-### Requirements
-For the execution of the project, the libraries available in the text file requirements.txt must be downloaded.
+In the root directory of this repository, type the following command (you must have conda installed in your system):
+
+./setup.sh
+
+## Application
 
 ### Execution
 The project has 3 types of scripts that can be executed, Data Import, Pre-processing and Model Generation. To access the codes it is necessary to be in the `./src` directory.
 
 #### Data Import
-In the project there are 3 different data import scripts, for COR stations, INMET stations and Radiosonde. They are responsible for generating the datasets that will be used for training the model.
+In the project there are 3 different data import scripts, for COR stations, INMET stations and Radiosonde. They are responsible for generating the datasets that will be used for training the nowcasting model.
 
-The script **_estacoes_cor.py_** has four arguments `-s` or `--sta` that define which station will be selected, the argument `-a` or `--all` which if filled with 1 indicates that they will be importing the data of all stations, and finally `-b` or `--begin` and `-e` or `--end` which can be filled with the interval of years for importing the data (The default interval for data import period is from 1997 to 2022). You have to choose between the weather stations by name: alto_da_boa_vista, guaratiba, iraja, jardim_botanico, riocentro, santa_cruz, sao_cristovao, vidigal.
-Execution Example:
+The script **_estacoes_cor.py_** has four arguments:
 
-`Python estacoes_cor.py -s são_cristovao`
+- `-s` or `--sta` that define which station will be selected, 
+- `-a` or `--all` which if filled with 1 indicates that they will be importing the data of all stations, 
+- `-b` or `--begin` and `-e` or `--end` which can be filled with the interval of years for importing the data (The default interval for data import period is from 1997 to 2022). 
+
+You have to choose between the weather stations by name: alto_da_boa_vista, guaratiba, iraja, jardim_botanico, riocentro, santa_cruz, sao_cristovao, vidigal.
+
+Example:
+
+`python estacoes_cor.py -s são_cristovao`
 
 The São Cristóvão station dataset will be imported into the project data folder.
 
-`Python estacoes_cor.py -a 1 -b 2000 -e 2015`
+`python estacoes_cor.py -a 1 -b 2000 -e 2015`
 
 The datasets of all stations in the period from 2000 to 2015 will be imported.
 
