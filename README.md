@@ -15,10 +15,13 @@ In the root directory of this repository, type the following command (you must h
 ### Execution
 The project has 3 types of scripts that can be executed, Data Import, Pre-processing and Model Generation. To access the codes it is necessary to be in the `./src` directory.
 
-#### Data Import
+#### Data import scripts
+
 In the project there are 3 different data import scripts, for COR stations, INMET stations and Radiosonde. They are responsible for generating the datasets that will be used for training the nowcasting model.
 
-Script **_estacoes_cor.py_** has four command line arguments:
+##### Script **_estacoes_cor.py_** 
+
+This script has four command line arguments:
 
 - `-s` or `--sta` that define which station will be selected. You have to provide the weather station of interest by name: alto_da_boa_vista, guaratiba, iraja, jardim_botanico, riocentro, santa_cruz, sao_cristovao, vidigal. 
 - `-a` or `--all` which if filled with 1 indicates that they will be importing the data of all stations.
@@ -45,15 +48,15 @@ Script **_estacoes_inmet.py_** has four command line arguments:
 
 Example 1:
 
-`Python stations_inmet.py -s A652`
+`python stations_inmet.py -s A652`
 
-The data set for the Copacabana Fort station will be imported into the project data folder.
+The command import the observations from the Copacabana Fort station.
 
 Example 2:
 
-`Python estacoes_inmet.py -a 1 -b 1999 -e 2017`
+`python estacoes_inmet.py -a 1 -b 1999 -e 2017`
 
-The datasets of all stations in the period from 1999 to 2017 will be imported.
+The command imports the observations from all stations between 1999 to 2017 will be imported.
 
 
 **_estacoes_rad.py_** has two command line arguments:
