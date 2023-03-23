@@ -1,7 +1,8 @@
 # AtmoSeer
 
-## About the tool
-TCC project, which aims to make rainfall forecasts using Convolutional Neural Networks, with different data sources.
+## About
+
+This project provides a pipeline to build rainfall forecast models using 1D Convolutional Neural Networks. The pipeline can be configured with different meteorological data sources.
 
 ## Application
 
