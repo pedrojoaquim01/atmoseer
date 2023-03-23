@@ -18,38 +18,41 @@ The project has 3 types of scripts that can be executed, Data Import, Pre-proces
 #### Data Import
 In the project there are 3 different data import scripts, for COR stations, INMET stations and Radiosonde. They are responsible for generating the datasets that will be used for training the nowcasting model.
 
-The script **_estacoes_cor.py_** has four arguments:
+Script **_estacoes_cor.py_** has four command line arguments:
 
-- `-s` or `--sta` that define which station will be selected, 
-- `-a` or `--all` which if filled with 1 indicates that they will be importing the data of all stations, 
+- `-s` or `--sta` that define which station will be selected. You have to provide the weather station of interest by name: alto_da_boa_vista, guaratiba, iraja, jardim_botanico, riocentro, santa_cruz, sao_cristovao, vidigal. 
+- `-a` or `--all` which if filled with 1 indicates that they will be importing the data of all stations.
 - `-b` or `--begin` and `-e` or `--end` which can be filled with the interval of years for importing the data (The default interval for data import period is from 1997 to 2022). 
 
-You have to choose between the weather stations by name: alto_da_boa_vista, guaratiba, iraja, jardim_botanico, riocentro, santa_cruz, sao_cristovao, vidigal.
-
-Example:
+Example 1:
 
 `python estacoes_cor.py -s são_cristovao`
 
-The São Cristóvão station dataset will be imported into the project data folder.
+The above command imports the São Cristóvão station dataset into the project data folder.
+
+Example 1:
 
 `python estacoes_cor.py -a 1 -b 2000 -e 2015`
 
-The datasets of all stations in the period from 2000 to 2015 will be imported.
+The above command imports all the stations in the period from 2000 to 2015.
 
 
-The script **_estacoes_inmet.py_** has four arguments `-s` or `--sta`, which defines which station will be selected, the argument `-a` or `--all` which if filled with 1 indicates that data from all stations will be imported, and finally `-b` or `--begin` and `-e` or `--end` which can be filled with the interval of years for importing the data (The default interval for data import period is from 1997 to 2022). You must choose between the weather stations using their code: A652 (Forte de Copacabana), A636 (Jacarepagua), A621 (Vila Militar), A602 (Marambaia)
-Execution Example:
+Script **_estacoes_inmet.py_** has four command line arguments:
 
+-  `-s` or `--sta`, which defines which station will be selected. You must provide the weather stations using their code. The possible codes are A652 (Forte de Copacabana), A636 (Jacarepagua), A621 (Vila Militar), A602 (Marambaia).
+- `-a` or `--all` which if filled with 1 indicates that data from all stations will be imported.
+- `-b` or `--begin` and `-e` or `--end` which can be filled with the interval of years for importing the data (The default interval for data import period is from 1997 to 2022).
+
+Example 1:
 `Python stations_inmet.py -s A652`
-
 The data set for the Copacabana Fort station will be imported into the project data folder.
 
+Example 1:
 `Python estacoes_inmet.py -a 1 -b 1999 -e 2017`
-
 The datasets of all stations in the period from 1999 to 2017 will be imported.
 
 
-The script **_estacoes_rad.py_** has only two arguments `-b` or `--begin` and `-e` or `--end` which can be filled in with the year interval for data import (The default interval for data import period is from 1997 to 2022). When running it the Galeão Airport radiosonde dataset will be generated.
+Script **_estacoes_rad.py_** has only two arguments `-b` or `--begin` and `-e` or `--end` which can be filled in with the year interval for data import (The default interval for data import period is from 1997 to 2022). When running it the Galeão Airport radiosonde dataset will be generated.
 Execution Example:
 
 `Python stations_rad.py`
