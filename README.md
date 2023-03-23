@@ -12,8 +12,9 @@ In the root directory of this repository, type the following command (you must h
 
 ## Application
 
-### Execution
-The project has 3 types of scripts that can be executed, Data Import, Pre-processing and Model Generation. To access the codes it is necessary to be in the `./src` directory.
+### Project pipeline
+
+The project pipeline is defined as a sequence of three steps: (1) data import, (2) data pre-processing and (3) model generation. These steps are implemented as Python scripts in the `./src` directory.
 
 #### Data import scripts
 
