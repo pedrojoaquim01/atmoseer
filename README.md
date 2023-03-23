@@ -40,7 +40,9 @@ Example 2:
 The above command imports all the stations in the period from 2000 to 2015.
 
 
-Script **_estacoes_inmet.py_** has four command line arguments:
+#### Script **_estacoes_inmet.py_** 
+
+This script has four command line arguments:
 
 -  `-s` or `--sta`, which defines which station will be selected. You must provide the weather stations using their code. The possible codes are A652 (Forte de Copacabana), A636 (Jacarepagua), A621 (Vila Militar), A602 (Marambaia).
 - `-a` or `--all` which if filled with 1 indicates that data from all stations will be imported.
