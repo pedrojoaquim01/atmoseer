@@ -2,9 +2,7 @@ import pandas as pd
 import numpy as np
 import sys, getopt, os, re
 
-
-
-def processamento(estacao, all = 0,arg_begin = 1997,arg_end = 2022):
+def import_data(estacao, all = 0,arg_begin = 1997,arg_end = 2022):
     anos = list(range(arg_begin, arg_end))
     estacoes_inmet = pd.read_json('https://apitempo.inmet.gov.br/estacoes/T')
     estacoes_inmet = estacoes_inmet[estacoes_inmet['SG_ESTADO'] == 'RJ']
@@ -28,8 +26,7 @@ def processamento(estacao, all = 0,arg_begin = 1997,arg_end = 2022):
                 dfnew2 = pd.concat(uniao)
             dfnew2.to_csv(estacoes['DC_NOME'].iloc[j] + '.csv')
 
-
-def myfunc(argv):
+def main(argv):
     arg_file = ""
     arg_all = 0
     arg_begin = 1997
@@ -58,10 +55,10 @@ def myfunc(argv):
     if arg_file == '' and arg_all == 0:
         print('Digite alguma das estações : A652 (Forte de Copacabana), A636 (Jacarepagua), A621 (Vila Militar), A602 (Marambaia)')
     else:
-        processamento(arg_file,arg_all,arg_begin,arg_end)
+        import_data(arg_file,arg_all,arg_begin,arg_end)
 
 
 if __name__ == "__main__":
-    myfunc(sys.argv)
+    main(sys.argv)
 
 
