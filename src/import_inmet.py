@@ -3,7 +3,6 @@ import sys, getopt
 from datetime import datetime
 from util import is_posintstring
 
-# API_TOKEN = "ejlJQjBhRWw0bUlUNlBnY0taRWFjWnFoSExSVFUwNW4=z9IB0aEl4mIT6PgcKZEacZqhHLRTU05n"
 API_BASE_URL = "https://apitempo.inmet.gov.br"
 STATION_CODES_FOR_RJ = ('A636', 'A621', 'A602', 'A652')
 
