@@ -10,9 +10,9 @@ import getopt
 import  time
 from typing import List
 from math import cos, asin, sqrt
-from Utils.windowing import generate_windowed_split
-from Utils.model import NetOrdinalClassification, label2ordinalencoding, NetRegression
-from Utils.training import fit, create_train_n_val_loaders, DeviceDataLoader, to_device, gen_learning_curve,seed_everything
+from utils.windowing import generate_windowed_split
+from utils.model import NetOrdinalClassification, label2ordinalencoding, NetRegression
+from utils.training import fit, create_train_n_val_loaders, DeviceDataLoader, to_device, gen_learning_curve,seed_everything
 
 cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
 
