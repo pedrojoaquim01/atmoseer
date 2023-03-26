@@ -51,13 +51,13 @@ This script has four command line arguments:
 
 Example 1:
 
-`python import_inmet.py -s A652`
+`python import_inmet.py -s A652 -api_token <token_string>`
 
 The command import the observations from the Copacabana Fort station.
 
 Example 2:
 
-`python import_inmet.py -a 1 -b 1999 -e 2017`
+`python import_inmet.py -a 1 -b 1999 -e 2017 -api_token <token_string>`
 
 The command imports the observations from all stations between 1999 to 2017 will be imported.
 
