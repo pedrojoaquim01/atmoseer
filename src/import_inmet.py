@@ -1,61 +1,79 @@
 import pandas as pd
-import numpy as np
-import sys, getopt, os, re
+import sys, getopt
+from datetime import datetime
+from util import is_posintstring
 
-def import_data(estacao, all = 0,arg_begin = 1997,arg_end = 2022):
-    anos = list(range(arg_begin, arg_end))
-    estacoes_inmet = pd.read_json('https://apitempo.inmet.gov.br/estacoes/T')
-    estacoes_inmet = estacoes_inmet[estacoes_inmet['SG_ESTADO'] == 'RJ']
-    if all < 1:
-        estacoes = estacoes_inmet[estacoes_inmet['CD_ESTACAO'] == estacao]
-        dfnew2 = pd.read_json('https://apitempo.inmet.gov.br/estacao/'+ str(arg_begin) +'-01-01/'+ str(arg_begin + 1) +'01-01/' + estacao)
-        for i in anos:
-            novo = pd.read_json('https://apitempo.inmet.gov.br/estacao/' + str(i) + '-01-01/' + str(i+1) + '-01-01/' + estacao)
-            uniao = [dfnew2, novo]
-            dfnew2 = pd.concat(uniao)
-        dfnew2.to_csv(estacoes['DC_NOME'].iloc[0] + '_'+ str(arg_begin) +'_'+ str(arg_end) +'.csv')
+# API_TOKEN = "ejlJQjBhRWw0bUlUNlBnY0taRWFjWnFoSExSVFUwNW4=z9IB0aEl4mIT6PgcKZEacZqhHLRTU05n"
+API_BASE_URL = "https://apitempo.inmet.gov.br"
+STATION_CODES_FOR_RJ = ('A636', 'A621', 'A602', 'A652')
+
+def import_from_station(station_code, initial_year, final_year, api_token):
+    years = list(range(initial_year, final_year))
+    df_inmet_stations = pd.read_json(API_BASE_URL + '/estacoes/T')
+    station_row = df_inmet_stations[df_inmet_stations['CD_ESTACAO'] == station_code]
+    df_observations_for_all_years = None
+    print(f"Downloading observations from weather station '{station_code}'...")
+    for year in years:
+        query_str = API_BASE_URL + '/token/estacao/' + str(year) + '-01-01/' + str(year) + '-12-31/' + station_code + "/" + api_token
+        print(query_str)
+        df_observations_for_a_year = pd.read_json(query_str)
+        if df_observations_for_all_years is None:
+            temp = [df_observations_for_a_year]
+        else:
+            temp = [df_observations_for_all_years, df_observations_for_a_year]
+        df_observations_for_all_years = pd.concat(temp)
+    filename = '../data/landing/' + station_row['CD_ESTACAO'].iloc[0] + '_'+ str(initial_year) +'_'+ str(final_year) +'.csv'
+    print(f"Done! Saving dowloaded content to '{filename}'.")
+    df_observations_for_all_years.to_csv(filename)
+
+def import_data(station_code, initial_year, final_year, api_token):
+    if station_code == "all":
+        df_inmet_stations = pd.read_json(API_BASE_URL + '/estacoes/T')
+        station_row = df_inmet_stations[df_inmet_stations['CD_ESTACAO'].isin(STATION_CODES_FOR_RJ)]
+        for j in list(range(0, len(station_row))):
+            station_code = station_row['CD_ESTACAO'].iloc[j]
+            import_from_station(station_code, initial_year, final_year, api_token)
     else:
-        estacoes = estacoes_inmet[estacoes_inmet['CD_ESTACAO'].isin(('A636', 'A621', 'A602', 'A652'))]
-        for j in list(range(0, len(estacoes))):
-            dfnew2 = pd.read_json(
-                'https://apitempo.inmet.gov.br/estacao/'+ str(arg_begin) +'-01-01/'+ str(arg_begin + 1) +'-01-01/' + estacoes['CD_ESTACAO'].iloc[j])
-            for i in anos:
-                novo = pd.read_json('https://apitempo.inmet.gov.br/estacao/' + str(i) +
-                                    '-01-01/' + str(i+1) + '-01-01/' + estacoes['CD_ESTACAO'].iloc[j])
-                uniao = [dfnew2, novo]
-                dfnew2 = pd.concat(uniao)
-            dfnew2.to_csv(estacoes['DC_NOME'].iloc[j] + '.csv')
+        import_from_station(station_code, initial_year, final_year, api_token)
 
 def main(argv):
-    arg_file = ""
-    arg_all = 0
-    arg_begin = 1997
-    arg_end = 2022
-    arg_help = "{0} -s <station> -a <all> -b <begin> -e <end>".format(argv[0])
+    station_code = ""
+
+    start_year = 1997
+    end_year = datetime.now().year
+
+    help_message = "{0} -s <station> -b <begin> -e <end> -t <api_token>".format(argv[0])
     
     try:
-        opts, args = getopt.getopt(argv[1:], "hs:a:b:e:", ["help", "sta=", "all=","begin=","end="])
+        opts, args = getopt.getopt(argv[1:], "hs:b:e:t:", ["help", "station=", "begin=", "end=", "api_token="])
     except:
-        print(arg_help)
+        print(help_message)
         sys.exit(2)
     
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            print(arg_help)  # print the help message
+            print(help_message)
             sys.exit(2)
-        elif opt in ("-s", "--sta"):
-            arg_file = arg
-        elif opt in ("-a", "--all"):
-            arg_all = 1
+        elif opt in ("-t", "-api_token"):
+            api_token = arg
+        elif opt in ("-s", "-station"):
+            station_code = arg
+            if not ((station_code == "all") or (station_code in STATION_CODES_FOR_RJ)):
+                print(help_message)
+                sys.exit(2)
         elif opt in ("-b", "--begin"):
-            arg_begin = arg
+            if not is_posintstring(arg):
+                sys.exit("Argument start_year must be an integer. Exit.")
+            start_year = int(arg)
         elif opt in ("-e", "--end"):
-            arg_end = arg
+            if not is_posintstring(arg):
+                sys.exit("Argument end_year must be an integer. Exit.")
+            end_year = int(arg)
 
-    if arg_file == '' and arg_all == 0:
-        print('Digite alguma das estações : A652 (Forte de Copacabana), A636 (Jacarepagua), A621 (Vila Militar), A602 (Marambaia)')
-    else:
-        import_data(arg_file,arg_all,arg_begin,arg_end)
+    assert (station_code is not None) and (station_code != '')
+    assert (start_year <= end_year)
+
+    import_data(station_code, start_year, end_year, api_token)
 
 
 if __name__ == "__main__":
