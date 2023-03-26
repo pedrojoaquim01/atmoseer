@@ -75,6 +75,8 @@ Example:
 
 The above command imports Galeão Airport radiosonde (SGBL) observations into the project data folder.
 
+### Data preprocessing scripts
+
 #### Script **_index_rad.py_** 
 
 This script has no arguments. It will generate the atmospheric instability indexes for the data imported by the script **_import_rad.py_**.
@@ -85,9 +87,9 @@ Example:
 
 Data from the Galeão Airport radiosonde will be used to calculate atmospheric instability indexes, generating a new dataset in the project's data folder.
 
+#### Script **_preprocessing.py_** 
 
-### Pre Processing
-The preprocessing script is responsible for performing several operations on the original dataset, such as creating variables or aggregating data, which can be interesting for model training and its final result. To run the preprocessing script you need to run the `Python pre_processing.py` command. The pre_processing code has 3 possible arguments, with only the first being required.
+The preprocessing script is responsible for performing several operations on the original dataset, such as creating variables or aggregating data, which can be interesting for model training and its final result. To run the preprocessing script you need to run the `python preprocessing.py` command. The pre_processing code has 3 possible arguments, with only the first being required.
 
 The arguments are:
  - `-f` or `--file` Mandatory argument, represents the name of the data file that will be used as a base for the model. It must be the same as the name of one of the files present in the *Data* folder of the project.
@@ -100,12 +102,13 @@ The arguments are:
 - `-s` or `--sta` Defines how many nearby stations will be added to the dataset
 Execution Example:
   
-  `python pre_processing.py -f 'RIO DE JANEIRO - FORTE DE COPACABANA_1997_2022' -d 'E-N-R' -s 5'`
+  `python preprocessing.py -f 'RIO DE JANEIRO - FORTE DE COPACABANA_1997_2022' -d 'E-N-R' -s 5'`
 
 A dataset will be created from the Forte de Copacabana station, with the aggregation of data from the 5 nearest meteorological stations, using the data sources: numerical model and radiosonde.
 
 
-### Model generation
+### Model generation script
+
 The model generation script is responsible for performing the training and exporting the results obtained by the model after testing. It can be executed through the command `python creates_modelo.py`, which needs two arguments `-f` or `-file` which receives the name of one of the datasets generated from pre-processing and `-r` or ` --reg` which defines the architecture that will be used.
 Execution Example:
 

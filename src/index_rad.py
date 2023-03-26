@@ -1,19 +1,12 @@
 import pandas as pd
-import numpy as np
-import sys, getopt, os, re
-from datetime import datetime
-from siphon.simplewebservice.wyoming import WyomingUpperAir
-from metpy.units import pandas_dataframe_to_unit_arrays
 from metpy.units import units
 import metpy.calc as mpcalc
 
-def processamento():
-    df_s = pd.read_csv('../data/sondas.csv')
-    
+def main():
+    df_s = pd.read_csv('../data/radiosonde/SBGL_2022-01-01_2022-12-31.csv')
 
     for tempo in df_s.time.unique():
-        df_aux = df_s[df_s['time'] == tempo]
-        
+        df_aux = df_s[df_s['time'] == tempo]        
     
     df_s['CAPE'] = 0.0
     df_s['CIN'] = 0.0
@@ -72,7 +65,7 @@ def processamento():
             except:
                 df_s.loc[df_s['time'] == tempo,'lift_index'] = 0
 
-    df_s.to_csv('../data/sondas_completo.csv',index=False)
+    df_s.to_csv('../data/radiosonde/SBGL_indexes_2022-01-01_2022-12-31.csv',index=False)
 
 if __name__ == "__main__":
-    processamento()
+    main()
