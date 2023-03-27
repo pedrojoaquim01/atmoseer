@@ -11,8 +11,9 @@ def import_from_station(station_code, initial_year, final_year, api_token):
     df_inmet_stations = pd.read_json(API_BASE_URL + '/estacoes/T')
     station_row = df_inmet_stations[df_inmet_stations['CD_ESTACAO'] == station_code]
     df_observations_for_all_years = None
-    print(f"Downloading observations from weather station '{station_code}'...")
+    print(f"Downloading observations from weather station {station_code}...")
     for year in years:
+        print(f"Downloading observations for year {year}...")
         query_str = API_BASE_URL + '/token/estacao/' + str(year) + '-01-01/' + str(year) + '-12-31/' + station_code + "/" + api_token
         print(query_str)
         df_observations_for_a_year = pd.read_json(query_str)
@@ -21,7 +22,7 @@ def import_from_station(station_code, initial_year, final_year, api_token):
         else:
             temp = [df_observations_for_all_years, df_observations_for_a_year]
         df_observations_for_all_years = pd.concat(temp)
-    filename = '../data/landing/' + station_row['CD_ESTACAO'].iloc[0] + '_'+ str(initial_year) +'_'+ str(final_year) +'.csv'
+    filename = '../data/weather_stations/' + station_row['CD_ESTACAO'].iloc[0] + '_'+ str(initial_year) +'_'+ str(final_year) +'.csv'
     print(f"Done! Saving dowloaded content to '{filename}'.")
     df_observations_for_all_years.to_csv(filename)
 
@@ -36,6 +37,9 @@ def import_data(station_code, initial_year, final_year, api_token):
         import_from_station(station_code, initial_year, final_year, api_token)
 
 def main(argv):
+    '''
+        python import_ws_inmet.py -s A652 -b 2020 -e 2022 --api_token <token>
+    '''
     station_code = ""
 
     start_year = 1997
@@ -53,9 +57,9 @@ def main(argv):
         if opt in ("-h", "--help"):
             print(help_message)
             sys.exit(2)
-        elif opt in ("-t", "-api_token"):
+        elif opt in ("-t", "--api_token"):
             api_token = arg
-        elif opt in ("-s", "-station"):
+        elif opt in ("-s", "--station"):
             station_code = arg
             if not ((station_code == "all") or (station_code in STATION_CODES_FOR_RJ)):
                 print(help_message)
@@ -69,6 +73,7 @@ def main(argv):
                 sys.exit("Argument end_year must be an integer. Exit.")
             end_year = int(arg)
 
+    assert (api_token is not None) and (api_token != '')
     assert (station_code is not None) and (station_code != '')
     assert (start_year <= end_year)
 

@@ -5,29 +5,25 @@ from math import cos, asin, sqrt
 import sys
 import getopt
 import xarray as xr
-from Utils.near_stations import prox
+from utils.near_stations import prox
 from datetime import datetime, timedelta
 
-def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta = 0):
+def pre_proc(arquivo, use_sounding_as_data_source = 0, use_numerical_model_as_data_source = 0, log_Vento = 1, log_Tempo = 1, num_neighbors = 0):
 
     arq_pre_proc = arquivo + '_E'
-    if(log_era):
+    if use_numerical_model_as_data_source:
         arq_pre_proc = arq_pre_proc + '-N'
-    if(log_CAPE):
+    if use_sounding_as_data_source:
         arq_pre_proc = arq_pre_proc + '-R'
-    if(sta > 0):
-        arq_pre_proc = arq_pre_proc + '_EI+' + str(sta) + 'NN'
+    if(num_neighbors > 0):
+        arq_pre_proc = arq_pre_proc + '_EI+' + str(num_neighbors) + 'NN'
     else:
         arq_pre_proc = arq_pre_proc + '_EI'
-    #if(log_Vento):
-    #    arq_pre_proc = arq_pre_proc + '_VENT'
-    #if(log_Tempo):
-    #    arq_pre_proc = arq_pre_proc + '_TEMP'
 
-    dado_proc = Path('../data/'+arq_pre_proc+'.csv')
+    dado_proc = Path('../data/' + arq_pre_proc + '.csv')
 
     if dado_proc.is_file():
-        fonte = '../data/'+arq_pre_proc+'.csv'
+        fonte = '../data/' + arq_pre_proc + '.csv'
         df = pd.read_csv(fonte)
         if 'Unnamed: 0' in df.columns:
             del df['Unnamed: 0']
@@ -35,18 +31,16 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta 
         df = df.reindex(sorted(df.columns), axis=1)
         return df
     else:
-        fonte = '../data/'+arquivo+'.csv'
+        fonte = '../data/' + arquivo + '.csv'
         df = pd.read_csv(fonte)
         if 'Unnamed: 0' in df.columns:
             del df['Unnamed: 0']
         df = df.fillna(0)
         df = df.reindex(sorted(df.columns), axis=1)
-        
-        #print('Log: Importou sem problema')
 
         cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
         
-        if(log_era):
+        if use_numerical_model_as_data_source:
             ano = list(map(str,range(1998,2022)))           
             ds = xr.open_dataset('../data/ERA-5/RJ_1997.nc')
             for i in ano:
@@ -102,9 +96,9 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta 
             df = df.fillna(0)
             del df['time']
             print('Log: Variavel ERA5 sem problema')
-            
-        if(log_CAPE):
-            df_rs = pd.read_csv('../data/sondas_completo.csv')
+
+        if use_sounding_as_data_source:
+            df_rs = pd.read_csv('../data/SBGL_indices_1997-01-01_2022-12-31.csv')
             df_rs['log_hr'] = ''
             df_rs['log_hr'] = df_rs['time'].map(lambda x: '0' if x[11:19] == '00:00:00' else '12')
            
@@ -113,8 +107,7 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta 
             else:
                 df['time'] = pd.to_datetime(df['DT_MEDICAO'] + ' '+ df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
             
-            			
-            df_rs_aux = df_rs[['time','CAPE','CIN','showalter','lift_index','k_index','total_totals']]
+            df_rs_aux = df_rs[['time', 'CAPE', 'CIN', 'showalter', 'lift', 'k', 'total_totals']]
             df_rs_aux = df_rs_aux.drop_duplicates()
             df_rs_aux['time'] = pd.to_datetime(df_rs_aux['time'].astype(str))
             df_rs_aux['time'] = df_rs_aux['time'] + timedelta(hours=4)
@@ -130,7 +123,7 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta 
             del df['time']
             print('Log: Variavel CAPE sem problema')
 
-        if(log_Vento):
+        if log_Vento:
             if arquivo in cor_est:
                 wv = df['VelVento'] / 3.6
                 wd_rad = df['DirVento']*np.pi / 180
@@ -144,9 +137,7 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta 
                 df['Wx'] = wv*np.cos(wd_rad)
                 df['Wy'] = wv*np.sin(wd_rad)
         
-            #print('Log: Variavel Vento sem problema')
-        
-        if(log_Tempo):
+        if log_Tempo:
             if arquivo in cor_est:
                 date_time = pd.to_datetime(df['Dia'] +' '+ df['Hora'], format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
             else:
@@ -161,17 +152,15 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta 
             df['Year sin'] = np.sin(timestamp_s * (2 * np.pi / year))
             df['Year cos'] = np.cos(timestamp_s * (2 * np.pi / year))
             
-            #print('Log: Variavel Tempo sem problema')
-        
         # AGREGAÇÃO E SEPARAÇÃO DOS DADOS
-        cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
+        cor_est = ['alto_da_boa_vista', 'guaratiba', 'iraja', 'jardim_botanico', 'riocentro', 'santa_cruz', 'sao_cristovao', 'vidigal']
         df = df.fillna(0)
 
         if arquivo in cor_est:
-            if sta != 0:
+            if num_neighbors != 0:
                 data_aux = pd.to_datetime(df['DT_MEDICAO'] + ' '+ df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
         else:    
-            if sta != 0:
+            if num_neighbors != 0:
                 data_aux = pd.to_datetime(df['Dia'] + ' '+ df['Hora'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df['Hora'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
         
         if arquivo in cor_est:
@@ -192,7 +181,7 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta 
 
         df2 = df2.fillna(0)
         
-        if sta != 0:
+        if num_neighbors != 0:
             df2['data'] = data_aux
 
         assert df2.isnull().values.any() == False
@@ -202,14 +191,14 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta 
         val_df = df2[int(n*0.7):int(n*0.9)]
         test_df = df2[int(n*0.9):]
 
-        if sta != 0:
+        if num_neighbors != 0:
             if s not in cor_est:
                 df2 = df2.drop(columns=['TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
                 train_df = train_df.drop(columns=['TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
                 val_df = val_df.drop(columns=['TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
                 test_df = test_df.drop(columns=['TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
                 
-            result = prox(arquivo,int(sta))
+            result = prox(arquivo,int(num_neighbors))
             count = 0
             for s in result:
                 fonte = '../data/'+ s +'.csv'
@@ -225,12 +214,11 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta 
                 suf = str(count)
                 count += 1
                 
-                #df1 = df1[df1['data'].isin(df['data'])]
-                
                 try:
                     train_df3 = df3[df3['data'].isin(train_df['data'])]
                 except:
                     continue
+
                 val_df3 = df3[df3['data'].isin(val_df['data'])]
                 test_df3 =  df3[df3['data'].isin(test_df['data'])]
 
@@ -263,46 +251,46 @@ def pre_proc(arquivo,log_CAPE = 0, log_era = 0,log_Vento = 1,log_Tempo = 1, sta 
                 val_df = val_df.fillna(0)
                 
         
-        if sta != 0:
+        if num_neighbors != 0:
             train_df = train_df.drop(columns=['data'])
             val_df = val_df.drop(columns=['data'])
             test_df = test_df.drop(columns=['data'])
 
         #Exportação
-        train_df.to_csv('../data/'+arq_pre_proc +'_train.csv')  
-        val_df.to_csv('../data/'+arq_pre_proc +'_val.csv')  
-        test_df.to_csv('../data/'+arq_pre_proc +'_test.csv')    
+        train_df.to_csv('../data/'+ arq_pre_proc + '_train.csv')  
+        val_df.to_csv('../data/'+ arq_pre_proc + '_val.csv')  
+        test_df.to_csv('../data/'+ arq_pre_proc + '_test.csv')    
         print('Para o script de treinamento do modelo utilize arquivo : ' + arq_pre_proc)
 
-def myfunc(argv):
+def main(argv):
     arg_file = ""
-    arg_CAPE = 0
-    arg_era = 0
-    sta = 0
-    arg_help = "{0} -f <file> -d <data_type>".format(argv[0])
+    use_sounding_as_data_source = 0
+    use_numerical_model_as_data_source = 0
+    num_neighbors = 0
+    help_message = "Usage: {0} -f <file> -d <data_source_spec> -n <num_neighbors>".format(argv[0])
     
     try:
-        opts, args = getopt.getopt(argv[1:], "hf:d:s:", ["help", "file=", "data=", "sta="])
+        opts, args = getopt.getopt(argv[1:], "hf:d:n:", ["help", "file=", "datasources=", "neighbors="])
     except:
-        print(arg_help)
+        print(help_message)
         sys.exit(2)
     
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            print(arg_help)  # print the help message
+            print(help_message)  # print the help message
             sys.exit(2)
         elif opt in ("-f", "--file"):
             arg_file = arg
-        elif opt in ("-d", "--data"):
+        elif opt in ("-d", "--datasources"):
             if arg.find('R') != -1:
-                arg_CAPE = 1
+                use_sounding_as_data_source = 1
             if arg.find('N') != -1:
-                arg_era = 1
-        elif opt in ("-s", "--sta"):
-            sta = arg
+                use_numerical_model_as_data_source = 1
+        elif opt in ("-n", "--neighbors"):
+            num_neighbors = arg
 
-    pre_proc(arg_file,arg_CAPE,arg_era,sta)
+    pre_proc(arg_file, use_sounding_as_data_source, use_numerical_model_as_data_source, num_neighbors = num_neighbors)
 
 
 if __name__ == "__main__":
-    myfunc(sys.argv)
+    main(sys.argv)
