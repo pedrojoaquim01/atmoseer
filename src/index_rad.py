@@ -1,71 +1,89 @@
 import pandas as pd
 from metpy.units import units
 import metpy.calc as mpcalc
+import sys
 
-def main():
-    df_s = pd.read_csv('../data/radiosonde/SBGL_2022-01-01_2022-12-31.csv')
+def compute_indices(df_probe_original):
+    df_probe = df_probe_original.drop_duplicates(subset='pressure', ignore_index=True)
 
-    for tempo in df_s.time.unique():
-        df_aux = df_s[df_s['time'] == tempo]        
+    df_probe = df_probe.dropna()
+
+    # df_probe.reset_index(inplace = True)
     
-    df_s['CAPE'] = 0.0
-    df_s['CIN'] = 0.0
-    df_s['lift_index'] = 0.0
-    df_s['k_index'] = 0.0
-    df_s['total_totals'] = 0.0
-    df_s['showalter'] = 0.0
-    df_s['parcel_profile'] = 0.0
+    pressure_values = df_probe['pressure'].to_numpy() * units.hPa
+    temperature_values = df_probe['temperature'].to_numpy() * units.degC
+    dewpoint_values = df_probe['dewpoint'].to_numpy() * units.degC
 
-    for tempo in df_s.time.unique():
-        df_aux = df_s[df_s['time'] == tempo]
-        df_aux.drop_duplicates(inplace=True,subset='pressure',ignore_index=True)
+    parcel_profile = mpcalc.parcel_profile(pressure_values, 
+                                           df_probe['temperature'][0] * units.degC, 
+                                           df_probe['dewpoint'][0] * units.degC)
+    parcel_profile =  parcel_profile.magnitude * units.degC
+
+
+    indices = dict()
+
+    CAPE = mpcalc.surface_based_cape_cin(pressure_values, temperature_values, dewpoint_values)
+    indices['cape'] = CAPE[0].magnitude
+    indices['cin'] = CAPE[1].magnitude
+
+    lift = mpcalc.lifted_index(pressure_values, temperature_values, parcel_profile)
+    indices['lift'] = lift[0].magnitude
+
+    k = mpcalc.k_index(pressure_values, temperature_values, dewpoint_values)
+    indices['k'] = k.magnitude
+
+    total_totals = mpcalc.total_totals_index(pressure_values, temperature_values, dewpoint_values)
+    indices['total_totals'] = total_totals.magnitude
+
+    showalter = mpcalc.showalter_index(pressure_values, temperature_values, dewpoint_values)
+    indices['showalter'] = showalter.magnitude[0]
+
+    return indices
+    
+def main():
+    input_file = '../data/radiosonde/SBGL_1997-01-01_2022-12-31.csv'
+    output_file = '../data/radiosonde/SBGL_indices_1997-01-01_2022-12-31.csv'
+    
+    # input_file = '../data/radiosonde/2012-02-02.csv'
+    # output_file = '../data/radiosonde/2012-02-02_indices.csv'
+    
+    dtype_dict = {'pressure': 'float',
+                  'height': 'float',
+                  'temperature': 'float',
+                  'dewpoint': 'float',
+                  'direction': 'float',
+                  'speed': 'float',
+                  'u_wind': 'float',
+                  'v_wind': 'float',
+                  'station': 'str',
+                  'station_number': 'int',
+                  'time': 'str',
+                  'latitude': 'float',
+                  'longitude': 'float',
+                  'elevation': 'float',
+                  'pw': 'float'}
+
+    df_s = pd.read_csv(input_file, header=0, dtype=dtype_dict, on_bad_lines='skip')
+
+    df_indices = pd.DataFrame(columns = ['time', 'cape', 'cin', 'lift', 'k', 'total_totals', 'showalter'])
+
+    for probe_timestamp in pd.to_datetime(df_s.time).unique():
         try:
-            parcel_profile = mpcalc.parcel_profile(df_aux['pressure'].to_numpy() * units.hPa , df_aux['temperature'][0] * units.degC, df_aux['dewpoint'][0] * units.degC)
-            df_s.loc[df_s['time'] == tempo,'parcel_profile'] =  parcel_profile.magnitude
-        except:
-            df_s.loc[df_s['time'] == tempo,'parcel_profile'] = 0
+            df_probe = df_s[pd.to_datetime(df_s['time']) == probe_timestamp]
+            indices_dict = compute_indices(df_probe)
+            indices_dict['time'] = probe_timestamp
+            df_indices = pd.concat([df_indices, pd.DataFrame.from_records([indices_dict])])
+        except ValueError as e:
+            print(f'Error processing probe at timestamp {probe_timestamp}')
+            print(f'{repr(e)}')
+        except IndexError as e:
+            print(f'Error processing probe at timestamp {probe_timestamp}')
+            print(f'{repr(e)}')
+        except KeyError as e:
+            print(f'Error processing probe at timestamp {probe_timestamp}')
+            print(f'{repr(e)}')
 
-    for tempo in df_s.time.unique():
-            df_aux = df_s[df_s['time'] == tempo]
-
-            try:
-                CAPE = mpcalc.surface_based_cape_cin(df_aux['pressure'].to_numpy() * units.hPa , df_aux['temperature'].to_numpy() * units.degC, df_aux['dewpoint'].to_numpy() * units.degC)
-                df_s.loc[df_s['time'] == tempo,'CAPE'] = CAPE[0].astype(float)
-                df_s.loc[df_s['time'] == tempo,'CIN'] = CAPE[1].astype(float)
-            except:
-                CAPE = [0,0]
-                df_s.loc[df_s['time'] == tempo,'CAPE'] = CAPE[0]
-                df_s.loc[df_s['time'] == tempo,'CIN'] = CAPE[1]
-
-            try:
-                k_index = mpcalc.k_index(df_aux['pressure'].to_numpy() * units.hPa , df_aux['temperature'].to_numpy() * units.degC, df_aux['dewpoint'].to_numpy() * units.degC)
-                df_s.loc[df_s['time'] == tempo,'k_index'] = k_index.magnitude
-            except:
-                df_s.loc[df_s['time'] == tempo,'k_index'] = 0
-
-            
-            try:
-                showalter = mpcalc.showalter_index(df_aux['pressure'].to_numpy() * units.hPa , df_aux['temperature'].to_numpy() * units.degC, df_aux['dewpoint'].to_numpy() * units.degC)
-                print(showalter.magnitude[0])
-                df_s.loc[df_s['time'] == tempo,'showalter'] = showalter.magnitude[0]
-            except:
-                df_s.loc[df_s['time'] == tempo,'showalter'] = 0
-
-
-            try:
-                total_totals = mpcalc.total_totals_index(df_aux['pressure'].to_numpy() * units.hPa , df_aux['temperature'].to_numpy() * units.degC, df_aux['dewpoint'].to_numpy() * units.degC)
-                df_s.loc[df_s['time'] == tempo,'total_totals'] = total_totals.magnitude
-            except:
-                df_s.loc[df_s['time'] == tempo,'total_totals'] = 0
-                
-            
-            try:
-                lift_index = mpcalc.lifted_index(df_aux['pressure'].to_numpy() * units.hPa , df_aux['temperature'].to_numpy() * units.degC, df_aux['parcel_profile'].to_numpy() * units.degC)
-                df_s.loc[df_s['time'] == tempo,'lift_index'] = lift_index[0].astype(float)
-            except:
-                df_s.loc[df_s['time'] == tempo,'lift_index'] = 0
-
-    df_s.to_csv('../data/radiosonde/SBGL_indexes_2022-01-01_2022-12-31.csv',index=False)
+    df_indices.to_csv(output_file, index = False)
 
 if __name__ == "__main__":
     main()
