@@ -45,7 +45,7 @@ def main(argv):
     start_year = 1997
     end_year = datetime.now().year
 
-    help_message = "{0} -s <station> -b <begin> -e <end> -t <api_token>".format(argv[0])
+    help_message = "{0} -s <station_id> -b <begin> -e <end> -t <api_token>".format(argv[0])
     
     try:
         opts, args = getopt.getopt(argv[1:], "hs:b:e:t:", ["help", "station=", "begin=", "end=", "api_token="])
