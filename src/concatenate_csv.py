@@ -16,11 +16,17 @@ else:
 # Initialize list to hold rows from input files
 rows = []
 
+is_first_file = True
+
 # Loop through input files and append rows to list
 for filename in os.listdir(input_dir):
     if filename.endswith('.csv'):
         with open(os.path.join(input_dir, filename), newline='') as csvfile:
             reader = csv.reader(csvfile)
+            if is_first_file:
+                is_first_file = False
+            else:
+                next(reader) # This skips the first row of the CSV file (because it is the header)
             for row in reader:
                 rows.append(row)
 
@@ -32,4 +38,4 @@ with open(output_file, 'w', newline='') as csvfile:
 
 print(f'{len(rows)} rows written to {output_file}.')
 
-# python concat_csv.py input_dir output_file.csv
+# python concatenate_csv.py input_dir SBGL_1997-01-01_2022-12-31.csv
