@@ -9,6 +9,9 @@ from utils.near_stations import prox
 from datetime import datetime, timedelta
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4ce7b9a... Create script merge_datasources.py
     # if arquivo in cor_est:
     #     wind_speed = df['VelVento']
     #     wind_direction = df['DirVento']
@@ -39,6 +42,7 @@ def transform_hour(df):
     df['hourfloat'] = df.hour + df.minute/60.0
     df['hour_x'] = np.sin(2.*np.pi*df.hourfloat/24.)
     df['hour_y'] = np.cos(2.*np.pi*df.hourfloat/24.)
+<<<<<<< HEAD
 =======
 def pre_proc(arquivo, use_sounding_as_data_source = 0, use_numerical_model_as_data_source = 0, log_Vento = 1, log_Tempo = 1, num_neighbors = 0):
 
@@ -294,6 +298,8 @@ def pre_proc(arquivo, use_sounding_as_data_source = 0, use_numerical_model_as_da
         test_df.to_csv('../data/'+ arq_pre_proc + '_test.csv')    
         print('Para o script de treinamento do modelo utilize arquivo : ' + arq_pre_proc)
 >>>>>>> f623eaf... Add _ws to weather station import script names
+=======
+>>>>>>> 4ce7b9a... Create script merge_datasources.py
 
 def main(argv):
     arg_file = ""
@@ -324,9 +330,12 @@ def main(argv):
 <<<<<<< HEAD
 =======
 
+<<<<<<< HEAD
     pre_proc(arg_file, use_sounding_as_data_source, use_numerical_model_as_data_source, num_neighbors = num_neighbors)
 
 >>>>>>> f623eaf... Add _ws to weather station import script names
 
+=======
+>>>>>>> 4ce7b9a... Create script merge_datasources.py
 if __name__ == "__main__":
     main(sys.argv)
