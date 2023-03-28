@@ -19,6 +19,7 @@ def compute_indices(df_probe_original):
                                            df_probe['dewpoint'][0] * units.degC)
     parcel_profile =  parcel_profile.magnitude * units.degC
 
+#
 
     indices = dict()
 
