@@ -112,26 +112,18 @@ The arguments are:
     - 'E-R': Weather station and radiosonde
     - 'E-N-R': Weather station, numerical model, and radiosonde
 - `-n` or `--neighbors` Defines how many nearby meteorological stations will be used to enrich the dataset
-<<<<<<< HEAD
 
 Usage example:
   
   `Python pre_processing.py -f 'RIO DE JANEIRO - FORTE DE COPACABANA_1997_2022' -d 'E-N-R' -s 5'`
-=======
 
 Usage example:
   
   `python preprocessing.py -f 'RIO DE JANEIRO - FORTE DE COPACABANA_1997_2022' -d 'E-N-R' -s 5'`
 
 The above command creates a dataset considering the Forte de Copacabana station as center, with the aggregation of data from the 5 nearest meteorological stations, using the data sources: numerical model and radiosonde.
->>>>>>> f623eaf... Add _ws to weather station import script names
 
 The above command creates a dataset considering the Forte de Copacabana station as center, with the aggregation of data from the 5 nearest meteorological stations, using the data sources: numerical model and radiosonde.
-
-<<<<<<< HEAD
-=======
-## Model generation
->>>>>>> 3392786... Update README
 
 #### Model generation
 The model generation script is responsible for performing the training and exporting the results obtained by the model after testing. It can be executed through the command `Python creates_modelo.py`, which needs two arguments `-f` or `-file` which receives the name of one of the datasets generated from pre-processing and `-r` or ` --reg` which defines the architecture that will be used.
@@ -147,11 +139,7 @@ A regression model will be created based on the already processed data set of th
 
 # System test example
 
-<<<<<<< HEAD
-Import : `Python import_inmet.py -s A652`
-=======
 Import : `python import_ws_inmet.py -s A652`
->>>>>>> f623eaf... Add _ws to weather station import script names
 
 Pre processing : `python pre_processing.py -f 'RIO DE JANEIRO - FORTE DE COPACABANA' -d 'E-N-R' -s 5 `
 
