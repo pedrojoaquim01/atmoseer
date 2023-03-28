@@ -7,7 +7,11 @@ API_BASE_URL = "https://apitempo.inmet.gov.br"
 STATION_CODES_FOR_RJ = ('A636', 'A621', 'A602', 'A652')
 
 def import_from_station(station_code, initial_year, final_year, api_token):
-    years = list(range(initial_year, final_year))
+
+    current_year = datetime.now().year
+    final_year = min(final_year, current_year)
+
+    years = list(range(initial_year, final_year + 1))
     df_inmet_stations = pd.read_json(API_BASE_URL + '/estacoes/T')
     station_row = df_inmet_stations[df_inmet_stations['CD_ESTACAO'] == station_code]
     df_observations_for_all_years = None
