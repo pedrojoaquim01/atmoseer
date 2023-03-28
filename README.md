@@ -79,15 +79,8 @@ The above command imports Galeão Airport radiosonde (SGBL) observations into th
 
 #### Script **_gen_sounding_indices.py_** 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 This script has no arguments. It will generate the atmospheric instability indexes for the data imported by the script **_import_sounding.py_**. Data from the SBGL radiosonde (located at the Galeão Airport, Rio de Janeiro - Brazil) will be used to calculate atmospheric instability indexes, generating a new dataset in CSV format. This new dataset contains one entry per sounding probe. SBGL sounding station produces two probes per day (at 00:00h and 12:00h UTC). Each entry contains the values of the computed instability indices for one probe. The following instability indices are computed:
-=======
-This script has no arguments. It will generate the atmospheric instability indexes for the data imported by the script **_import_sounding.py_**. Data from the SBGL radiosonde (located at the Galeão Airport, Rio de Janeiro - Brazil) will be used to calculate atmospheric instability indexes, generating a new dataset in CSV format. This new dataset contains one entry per sounding probe. SBGL sounding station produces two probes per day (at 00:00h ans 12:00h UTC). Each entry contains the values of the computed instability indices for one probe. The following instability indices are computed:
->>>>>>> 53f5172... Update README
-=======
-This script has no arguments. It will generate the atmospheric instability indexes for the data imported by the script **_import_sounding.py_**. Data from the SBGL radiosonde (located at the Galeão Airport, Rio de Janeiro - Brazil) will be used to calculate atmospheric instability indexes, generating a new dataset in CSV format. This new dataset contains one entry per sounding probe. SBGL sounding station produces two probes per day (at 00:00h and 12:00h UTC). Each entry contains the values of the computed instability indices for one probe. The following instability indices are computed:
->>>>>>> f623eaf... Add _ws to weather station import script names
+
 - CAPE
 - CIN
 - Lift
