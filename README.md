@@ -14,7 +14,7 @@ In the root directory of this repository, type the following command (you must h
 
 The project pipeline is defined as a sequence of three steps: (1) data import, (2) data pre-processing and (3) model generation. These steps are implemented as Python scripts in the `./src` directory.
 
-### Data import scripts
+### Data import
 
 In the project there are 3 different data import scripts:
 - for COR weather stations, 
@@ -80,7 +80,7 @@ Example:
 
 The above command imports Galeão Airport radiosonde (SGBL) observations into the project data folder.
 
-### Data preprocessing scripts
+### Data preprocessing
 
 #### Script **_gen_sounding_indices.py_** 
 
@@ -116,7 +116,7 @@ Usage example:
 The above command creates a dataset considering the Forte de Copacabana station as center, with the aggregation of data from the 5 nearest meteorological stations, using the data sources: numerical model and radiosonde.
 
 
-### Model generation script
+## Model generation
 
 The model generation script is responsible for performing the training and exporting the results obtained by the model after testing. It can be executed through the command `python creates_modelo.py`, which needs two arguments `-f` or `-file` which receives the name of one of the datasets generated from pre-processing and `-r` or ` --reg` which defines the architecture that will be used.
 Execution Example:
