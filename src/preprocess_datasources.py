@@ -36,7 +36,7 @@ def main(argv):
     sounding_data_source = None
     numerical_model_data_source = None
     num_neighbors = 0
-    help_message = "Usage: {0} -s <file> -d <data_source_spec> -n <num_neighbors>".format(argv[0])
+    help_message = "Usage: {0} -s <station_id> -d <data_source_spec> -n <num_neighbors>".format(argv[0])
     
     try:
         opts, args = getopt.getopt(argv[1:], "hf:d:n:", ["help", "file=", "datasources=", "neighbors="])
@@ -50,7 +50,7 @@ def main(argv):
             sys.exit(2)
         elif opt in ("-s", "--station"):
             station_id = arg
-            if not ((station_id in INMET_STATION_CODES_RJ) or station_id in COR_STATION_NAMES_RJ):
+            if not ((station_id in INMET_STATION_CODES_RJ) or (station_id in COR_STATION_NAMES_RJ)):
                 print(help_message)
                 sys.exit(2)
         elif opt in ("-f", "--file"):
