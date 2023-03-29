@@ -12,7 +12,7 @@ In the root directory of this repository, type the following command (you must h
 
 ## Project pipeline
 
-The project pipeline is defined as a sequence of three steps: (1) data import, (2) data pre-processing and (3) model generation. These steps are implemented as Python scripts in the `./src` directory.
+The project pipeline is defined as a sequence of three steps: (1) data import, (2) data pre-processing and (3) model training. These steps are implemented as Python scripts in the `./src` directory.
 
 #### Data import scripts
 
@@ -118,7 +118,7 @@ The above command creates a dataset considering the Forte de Copacabana station 
 
 The above command creates a dataset considering the Forte de Copacabana station as center, with the aggregation of data from the 5 nearest meteorological stations, using the data sources: numerical model and radiosonde.
 
-#### Model generation
+### Model training
 The model generation script is responsible for performing the training and exporting the results obtained by the model after testing. It can be executed through the command `Python creates_modelo.py`, which needs two arguments `-f` or `-file` which receives the name of one of the datasets generated from pre-processing and `-r` or ` --reg` which defines the architecture that will be used.
 Execution Example:
 

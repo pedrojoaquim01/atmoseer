@@ -1,5 +1,7 @@
+.vscode/
 data/
 models/
 backup/
  __pycache__/
  *.pyc
+

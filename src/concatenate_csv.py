@@ -13,7 +13,7 @@ else:
     input_dir = sys.argv[1]
     output_file = sys.argv[2]
 
-# Initialize list to hold rows from input files
+# Initialize list to hold rows from input files.
 rows = []
 
 is_first_file = True
