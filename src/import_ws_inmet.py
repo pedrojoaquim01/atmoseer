@@ -2,9 +2,7 @@ import pandas as pd
 import sys, getopt
 from datetime import datetime
 from util import is_posintstring
-
-API_BASE_URL = "https://apitempo.inmet.gov.br"
-STATION_CODES_FOR_RJ = ('A636', 'A621', 'A602', 'A652')
+from globals import *
 
 def import_from_station(station_code, initial_year, final_year, api_token):
 
@@ -33,7 +31,7 @@ def import_from_station(station_code, initial_year, final_year, api_token):
 def import_data(station_code, initial_year, final_year, api_token):
     if station_code == "all":
         df_inmet_stations = pd.read_json(API_BASE_URL + '/estacoes/T')
-        station_row = df_inmet_stations[df_inmet_stations['CD_ESTACAO'].isin(STATION_CODES_FOR_RJ)]
+        station_row = df_inmet_stations[df_inmet_stations['CD_ESTACAO'].isin(INMET_STATION_CODES_RJ)]
         for j in list(range(0, len(station_row))):
             station_code = station_row['CD_ESTACAO'].iloc[j]
             import_from_station(station_code, initial_year, final_year, api_token)
@@ -65,7 +63,7 @@ def main(argv):
             api_token = arg
         elif opt in ("-s", "--station"):
             station_code = arg
-            if not ((station_code == "all") or (station_code in STATION_CODES_FOR_RJ)):
+            if not ((station_code == "all") or (station_code in INMET_STATION_CODES_RJ)):
                 print(help_message)
                 sys.exit(2)
         elif opt in ("-b", "--begin"):
