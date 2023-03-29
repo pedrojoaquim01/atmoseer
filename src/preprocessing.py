@@ -4,43 +4,16 @@ from pathlib import Path
 from math import cos, asin, sqrt
 import sys
 import getopt
-import xarray as xr
 from utils.near_stations import prox
-from datetime import datetime, timedelta
 from metpy.calc import wind_components
 from metpy.units import units
-
-    # if arquivo in cor_est:
-    #     wind_speed = df['VelVento']
-    #     wind_direction = df['DirVento']
-    # else:
-    #     wind_speed = df['VEN_VEL']
-    #     wind_direction = df['VEN_DIR']
-# def transform_wind(wind_speed, wind_direction):
-#     wv = wind_speed / 3.6
-#     wd_rad = wind_direction * np.pi / 180
-#     wind_x = wv * np.cos(wd_rad)
-#     wind_y = wv * np.sin(wd_rad)
-#     return wind_x, wind_y
+from globals import *
 
 def transform_wind(wind_speed, wind_direction):
     """
     Calculate the U, V wind vector components from the speed and direction.
     """
     return wind_components(wind_speed * units('m/s'), wind_direction * units.deg)
-
-    # if arquivo in cor_est:
-    #     date_time = pd.to_datetime(df['Dia'] +' '+ df['Hora'], format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
-    # else:
-    #     date_time = pd.to_datetime(df['DT_MEDICAO'] + ' '+ df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
-# def transform_time(df, date_time):
-#     timestamp_s = date_time.map(pd.Timestamp.timestamp)
-#     day = 24*60*60
-#     year = (365.2425)*day
-#     df['Day sin'] = np.sin(timestamp_s * (2 * np.pi / day))
-#     df['Day cos'] = np.cos(timestamp_s * (2 * np.pi / day))
-#     df['Year sin'] = np.sin(timestamp_s * (2 * np.pi / year))
-#     df['Year cos'] = np.cos(timestamp_s * (2 * np.pi / year))
 
 def transform_hour(df):
     """
@@ -60,10 +33,10 @@ def transform_hour(df):
 
 def main(argv):
     arg_file = ""
-    use_sounding_as_data_source = 0
-    use_numerical_model_as_data_source = 0
+    sounding_data_source = None
+    numerical_model_data_source = None
     num_neighbors = 0
-    help_message = "Usage: {0} -f <file> -d <data_source_spec> -n <num_neighbors>".format(argv[0])
+    help_message = "Usage: {0} -s <file> -d <data_source_spec> -n <num_neighbors>".format(argv[0])
     
     try:
         opts, args = getopt.getopt(argv[1:], "hf:d:n:", ["help", "file=", "datasources=", "neighbors="])
@@ -75,13 +48,18 @@ def main(argv):
         if opt in ("-h", "--help"):
             print(help_message)  # print the help message
             sys.exit(2)
+        elif opt in ("-s", "--station"):
+            station_id = arg
+            if not ((station_id in INMET_STATION_CODES_RJ) or station_id in COR_STATION_NAMES_RJ):
+                print(help_message)
+                sys.exit(2)
         elif opt in ("-f", "--file"):
-            arg_file = arg
+            ws_data = arg
         elif opt in ("-d", "--datasources"):
             if arg.find('R') != -1:
-                use_sounding_as_data_source = 1
+                sounding_data_source = '../data/sounding/SBGL_indices_1997-01-01_2022-12-31.csv'
             if arg.find('N') != -1:
-                use_numerical_model_as_data_source = 1
+                numerical_model_data_source = '../data/numerical_models/ERA5_A652 _1997-01-01_2021-12-31.csv'
         elif opt in ("-n", "--neighbors"):
             num_neighbors = arg
 
