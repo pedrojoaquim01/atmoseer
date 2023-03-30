@@ -8,7 +8,7 @@ import xarray as xr
 from utils.near_stations import prox
 from datetime import datetime, timedelta
 
-def pre_proc(arquivo, use_sounding_as_data_source = 0, use_numerical_model_as_data_source = 0, log_Vento = 1, log_Tempo = 1, num_neighbors = 0):
+def pre_proc(arquivo, use_sounding_as_data_source = 0, use_numerical_model_as_data_source = 0, num_neighbors = 0):
 
     arq_pre_proc = arquivo + '_E'
     if use_numerical_model_as_data_source:
@@ -63,7 +63,24 @@ def pre_proc(arquivo, use_sounding_as_data_source = 0, use_numerical_model_as_da
             test2 = ds.sel(level = 700, longitude = longitude_aux, latitude = latitude_aux, method = 'nearest')
             test3 = ds2.sel(longitude = longitude_aux, latitude = latitude_aux, method = 'nearest')
             
-            df_era = pd.DataFrame({'time': test.time,'Geopotential_1000': test.z, 'Humidity_1000': test.r,'Temperature_1000': test.t, 'WindU_1000': test.u, 'WindV_1000': test.v,'Geopotential_700': test2.z, 'Humidity_700': test2.r,'Temperature_700': test2.t, 'WindU_700': test2.u, 'WindV_700': test2.v,'Geopotential_200': test3.z, 'Humidity_200': test3.r,'Temperature_200': test3.t, 'WindU_200': test3.u, 'WindV_200': test3.v})
+            df_era = pd.DataFrame({
+                'time': test.time,
+                'Geopotential_1000': test.z, 
+                'Humidity_1000': test.r,
+                'Temperature_1000': test.t, 
+                'WindU_1000': test.u, 
+                'WindV_1000': test.v,
+                'Geopotential_700': test2.z, 
+                'Humidity_700': test2.r,
+                'Temperature_700': test2.t, 
+                'WindU_700': test2.u, 
+                'WindV_700': test2.v,
+                'Geopotential_200': test3.z, 
+                'Humidity_200': test3.r,
+                'Temperature_200': test3.t, 
+                'WindU_200': test3.u, 
+                'WindV_200': test3.v}
+                )
             
             if arquivo in cor_est:
                 df['time'] = pd.to_datetime(df['Dia'] +' '+ df['Hora'], format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
@@ -123,35 +140,6 @@ def pre_proc(arquivo, use_sounding_as_data_source = 0, use_numerical_model_as_da
             del df['time']
             print('Log: Variavel CAPE sem problema')
 
-        if log_Vento:
-            if arquivo in cor_est:
-                wv = df['VelVento'] / 3.6
-                wd_rad = df['DirVento']*np.pi / 180
-
-                df['Wx'] = wv*np.cos(wd_rad)
-                df['Wy'] = wv*np.sin(wd_rad)
-            else:
-                wv = df['VEN_VEL']
-                wd_rad = df['VEN_DIR']*np.pi / 180
-
-                df['Wx'] = wv*np.cos(wd_rad)
-                df['Wy'] = wv*np.sin(wd_rad)
-        
-        if log_Tempo:
-            if arquivo in cor_est:
-                date_time = pd.to_datetime(df['Dia'] +' '+ df['Hora'], format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
-            else:
-                date_time = pd.to_datetime(df['DT_MEDICAO'] + ' '+ df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(0, 2) + ':' + df['HR_MEDICAO'].apply(lambda x: '{0:0>4}'.format(x)).str.slice(2, 4) + ':00', format='%Y-%m-%d%H:%M:%S', infer_datetime_format=True)
-            
-            timestamp_s = date_time.map(pd.Timestamp.timestamp)
-            day = 24*60*60
-            year = (365.2425)*day
-
-            df['Day sin'] = np.sin(timestamp_s * (2 * np.pi / day))
-            df['Day cos'] = np.cos(timestamp_s * (2 * np.pi / day))
-            df['Year sin'] = np.sin(timestamp_s * (2 * np.pi / year))
-            df['Year cos'] = np.cos(timestamp_s * (2 * np.pi / year))
-            
         # AGREGAÇÃO E SEPARAÇÃO DOS DADOS
         cor_est = ['alto_da_boa_vista', 'guaratiba', 'iraja', 'jardim_botanico', 'riocentro', 'santa_cruz', 'sao_cristovao', 'vidigal']
         df = df.fillna(0)
@@ -197,7 +185,7 @@ def pre_proc(arquivo, use_sounding_as_data_source = 0, use_numerical_model_as_da
                 train_df = train_df.drop(columns=['TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
                 val_df = val_df.drop(columns=['TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
                 test_df = test_df.drop(columns=['TEM_SEN','PRE_MAX','RAD_GLO','PTO_INS','TEM_MIN','UMD_MIN','PTO_MAX','PRE_MIN','UMD_MAX','PTO_MIN','TEM_MAX','TEN_BAT','VEN_RAJ','TEM_CPU'])
-                
+
             result = prox(arquivo,int(num_neighbors))
             count = 0
             for s in result:
