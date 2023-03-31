@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-from numpy import array,mean
+import numpy as np
 import torch
 import gc
 import torch.nn as nn
@@ -7,16 +6,16 @@ import pandas as pd
 import numpy as np
 import sys
 import getopt
-import  time
+import time
+
+from numpy import array, mean
 from typing import List
 from math import cos, asin, sqrt
 from utils.windowing import generate_windowed_split
 from utils.model import NetOrdinalClassification, label2ordinalencoding, NetRegression
-from utils.training import fit, create_train_n_val_loaders, DeviceDataLoader, to_device, gen_learning_curve,seed_everything
+from utils.training import fit, create_train_n_val_loaders, DeviceDataLoader, to_device, gen_learning_curve, seed_everything
 
 cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
-
-"""# Main"""
 
 def apply_subsampling(X, y, percentage = 0.1):
   print('*BEGIN*')
@@ -38,11 +37,6 @@ def apply_subsampling(X, y, percentage = 0.1):
   print(y.shape)
   print('*END*')
   return X, y
-
-import time
-import pandas as pd
-import numpy as np
-import torch
 
 def train(X_train, y_train, X_val, y_val, ordinal_regression):
   N_EPOCHS = 5000
@@ -94,35 +88,10 @@ def train(X_train, y_train, X_val, y_val, ordinal_regression):
 
   return model
 
-def main(ordinal_regression = True, file = ''):
+def build_model(ordinal_regression = True, file = ''):
   seed_everything()
 
-  arquivo = '../data/' + file
-
-  cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
-  
-  for s in cor_est:
-    if s in file:
-      col_target = 'Chuva'
-      break
-    else:
-      col_target = 'CHUVA'
-
-  X_train, y_train, X_val, y_val, X_test, y_test = generate_windowed_split(arquivo, id_target = col_target, window_size = 6)
-
-  print('***Before subsampling***')
-  print('Max precipitation values (train/val/test): %d, %d, %d' % (np.max(y_train), np.max(y_val), np.max(y_test)))
-  print('Mean precipitation values (train/val/test): %.4f, %.4f, %.4f' % (np.mean(y_train), np.mean(y_val), np.mean(y_test)))
-
-  # ### Subsampling
-  X_train, y_train = apply_subsampling(X_train, y_train)
-  X_val, y_val = apply_subsampling(X_val, y_val)
-  X_test, y_test = apply_subsampling(X_test, y_test)
-  # ### Subsampling
-
-  print('***After subsampling***')
-  print('Max precipitation values (train/val/test): %d, %d, %d' % (np.max(y_train), np.max(y_val), np.max(y_test)))
-  print('Mean precipitation values (train/val/test): %.4f, %.4f, %.4f' % (np.mean(y_train), np.mean(y_val), np.mean(y_test)))
+  # TODO: get np arrays from disk
 
   model = train(X_train, y_train, X_val, y_val, ordinal_regression)
   
@@ -132,7 +101,7 @@ def main(ordinal_regression = True, file = ''):
   model.evaluate(X_test, y_test)
 
 
-def myfunc(argv):
+def main(argv):
     arg_file = ""
     arg_model = True
     arg_help = "{0} -f <file> -s <sta>".format(argv[0])
@@ -152,7 +121,6 @@ def myfunc(argv):
         elif opt in ("-r", "--reg"):
             arg_model = False
 
-        
     global aux_nome
     global num_sta
     aux_nome = ''
@@ -160,11 +128,10 @@ def myfunc(argv):
     aux_nome = arg_file
     num_sta = str(arg_model)
     start_time = time.time()
-    main(ordinal_regression = arg_model, file = arg_file)
+    build_model(ordinal_regression = arg_model, file = arg_file)
     print("--- %s seconds ---" % (time.time() - start_time))
 
 
-
 if __name__ == "__main__":
-    myfunc(sys.argv)
+    main(sys.argv)
 

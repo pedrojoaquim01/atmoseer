@@ -62,6 +62,10 @@ def preprocess_ws_datasource(station_id):
     df['wind_u'] = df.apply(lambda x: transform_wind(x.VEN_VEL, x.VEN_DIR, 0),axis=1)
     df['wind_v'] = df.apply(lambda x: transform_wind(x.VEN_VEL, x.VEN_DIR, 1),axis=1)
 
+    ###############################
+    # TODO: create temporal features
+    ###############################
+
     #
     # Add index to dataframe using the timestamps.
     df.HR_MEDICAO = df.HR_MEDICAO.apply(format_time) # e.g., 1800 --> 18:00
@@ -97,7 +101,7 @@ def main(argv):
         if opt in ("-h", "--help"):
             print(help_message)  # print the help message
             sys.exit(2)
-        elif opt in ("-s", "--station"):
+        elif opt in ("-s", "--station_id"):
             station_id = arg
             if not ((station_id in INMET_STATION_CODES_RJ) or (station_id in COR_STATION_NAMES_RJ)):
                 print(f"Invalid station identifier: {station_id}")

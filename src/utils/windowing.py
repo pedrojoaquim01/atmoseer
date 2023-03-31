@@ -3,8 +3,6 @@ import pandas as pd
 import numpy as np
 from Utils.near_stations import prox
 
-cor_est = ['alto_da_boa_vista','guaratiba','iraja','jardim_botanico','riocentro','santa_cruz','sao_cristovao','vidigal']
-
 def apply_windowing(X, 
                     initial_time_step, 
                     max_time_step, 

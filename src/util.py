@@ -3,6 +3,7 @@ from datetime import datetime
 import os
 from metpy.calc import wind_components
 from metpy.units import units
+import numpy as np
 
 def is_posintstring(s):
     try:
