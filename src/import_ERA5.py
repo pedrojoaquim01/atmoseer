@@ -24,8 +24,8 @@ def get_data(station_name, start_date, end_date):
     file_exist = Path('../data/'+file+'.nc')
 
     if file_exist.is_file():
-        ds = xr.open_dataset('../data/RJ_'+ file +'.nc')
-        ds2 = xr.open_dataset('../data/RJ_'+ file +'_200.nc')
+        ds = xr.open_dataset('../data/'+ file +'.nc')
+        ds2 = xr.open_dataset('../data/'+ file +'_200.nc')
     else:
         c = cdsapi.Client()
 
