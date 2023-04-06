@@ -14,7 +14,7 @@ import requests
 
 def get_data(station_name, start_date, end_date):
 
-    print(f"Downloading observations from radiosonde {station_name}...")
+    print(f"Downloading observations from ERA5 {station_name}...")
 
     today = datetime.today()
     end_date = min([end_date, today.strftime("%Y")])
@@ -31,7 +31,7 @@ def get_data(station_name, start_date, end_date):
 
         unsuccesfully_downloaded_probes = 0
 
-        year = list(map(str,range(start_date,end_date)))
+        year = list(map(str,range(int(start_date),int(end_date) + 1)))
         for i in year:
             try:
                 c.retrieve(
@@ -101,14 +101,7 @@ def get_data(station_name, start_date, end_date):
                 print(f'Unexpected error! {repr(e)}')
                 sys.exit(2)
         
-        ano = list(range(start_date,end_date,2))
-        ano2 = list(range(start_date,end_date,2))
-
-        year2 = []
-        for i in range(0,len(ano2)):
-            year2 = year2 + [[str(ano[i]),str(ano2[i])]]
-
-        for i in year2:
+        for i in year:
             try:
                 c.retrieve(
                     'reanalysis-era5-pressure-levels',
@@ -122,7 +115,7 @@ def get_data(station_name, start_date, end_date):
                             '200',
                         ],
                         'year': [
-                        i[0],i[1],
+                            i,
                         ],
                         'month': [
                             '01', '02', '03',
@@ -158,8 +151,8 @@ def get_data(station_name, start_date, end_date):
                             -42,
                         ],
                     },
-                    '../data/ERA-5/RJ_'+ i[0]+'_'+i[1] +'_200.nc')
-                second_probe = 'RJ_'+ i[0]+'_'+i[1] +'_200'
+                    '../data/ERA-5/RJ_'+ i +'_200.nc')
+                second_probe = 'RJ_'+ i +'_200'
                 print(f"Data successfully downloaded for {second_probe}.")
             except IndexError as e:
                 print(f'{repr(e)}')
@@ -184,11 +177,11 @@ def get_data(station_name, start_date, end_date):
                 ds_aux = xr.open_dataset('../data/ERA-5/RJ_'+ i +'.nc')
                 ds = ds.merge(ds_aux) 
         
-        for i in year2:
-            if i[0] == str(start_date):
-                ds2 = xr.open_dataset('../data/ERA-5/RJ_'+ i[0]+'_'+i[1] +'_200.nc')
+        for i in year:
+            if i == str(start_date):
+                ds2 = xr.open_dataset('../data/ERA-5/RJ_'+ i +'_200.nc')
             else:
-                ds_aux2 = xr.open_dataset('../data/ERA-5/RJ_'+ i[0]+'_'+i[1] +'_200.nc')
+                ds_aux2 = xr.open_dataset('../data/ERA-5/RJ_'+ i +'_200.nc')
                 ds2 = ds2.merge(ds_aux2)
 
         print(f"Done! Number of unsuccesfully downloaded probes: {unsuccesfully_downloaded_probes}.")
@@ -199,6 +192,11 @@ def get_data(station_name, start_date, end_date):
     df_stations = df_stations[df_stations['files'] == station_name]
     latitude_aux = df_stations['VL_LATITUDE'].iloc[0]
     longitude_aux = df_stations['VL_LONGITUDE'].iloc[0]
+
+    min_time = min(ds.time.max(),ds2.time.max())   
+
+    ds = ds.sel(time = slice(ds.time.min(),min_time))
+    ds2 = ds2.sel(time = slice(ds2.time.min(),min_time))
 
     era5_data = ds.sel(level = 1000, longitude = longitude_aux, latitude = latitude_aux, method = 'nearest')
     era5_data2 = ds.sel(level = 700, longitude = longitude_aux, latitude = latitude_aux, method = 'nearest')
@@ -231,13 +229,13 @@ def main(argv):
             station_name = arg
         elif opt in ("-b", "--start_date"):
             try:
-                start_date = datetime.strptime(arg, date_format_str)
+                start_date = arg
             except ValueError:
                 print("Invalid date format. Use -h or --help for more information.")
                 sys.exit(2)
         elif opt in ("-e", "--end_date"):
             try:
-                end_date = datetime.strptime(arg, date_format_str)
+                end_date = arg
             except ValueError:
                 print("Invalid date format. Use -h or --help for more information.")
                 sys.exit(2)
